@@ -11,5 +11,5 @@ install = function(pkg){
 install("foreach")
 
 #Seleccionamos los archivos que queremos instalar
-archive = c("shiny", "rmarkdown", "foreach", "caret", "e1071", "rpart", "tree", "RWeka", "C50")
+archive = c("rJava", "shiny", "rmarkdown", "foreach", "caret", "e1071", "rpart", "tree", "RWeka", "C50")
 foreach(i = archive) %do% install(i)
