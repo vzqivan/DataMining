@@ -7,5 +7,9 @@ install = function(pkg){
   }
 }
 
-#uso
-install("RWeka")
+#Instalamos primero "foreach"
+install("foreach")
+
+#Seleccionamos los archivos que queremos instalar
+archive = c("shiny", "rmarkdown", "foreach", "caret", "e1071", "rpart", "tree", "RWeka", "C50")
+foreach(i = archive) %do% install(i)
