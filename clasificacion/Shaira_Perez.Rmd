@@ -5,7 +5,12 @@ date: "Saturday, June 20, 2015"
 output: html_document
 ---
 
-```{r, echo=FALSE, eval=FALSE}
+```{r eval=TRUE}
+msg = "Eval debe estar en TRUE, la primera vez que cargo el archivo no se evalua install"
+print(msg)
+```
+
+```{r, echo=FALSE, eval=TRUE}
 #1._ Importar librerías necesarias para .Rmd
 #Creamos la función que recibe los paquetes
 install = function(pkg){
