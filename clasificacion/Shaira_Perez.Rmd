@@ -1,0 +1,84 @@
+---
+title: "Tarea_Mineria"
+author: "Shaira Pérez"
+date: "Saturday, June 20, 2015"
+output: html_document
+---
+
+```{r, echo=FALSE, eval=FALSE}
+#1._ Importar librerías necesarias para .Rmd
+#Creamos la función que recibe los paquetes
+install = function(pkg){
+  #Si ya está instalado, no lo instala.
+  if (!require(pkg, character.only = TRUE)) {
+    install.packages(pkg)
+    if (!require(pkg, character.only = TRUE)) stop(paste("load failure:", pkg))
+  }
+}
+
+#Instalamos primero "foreach"
+install("foreach")
+
+#Seleccionamos los archivos que queremos instalar
+archive = c("rJava", "shiny", "rmarkdown", "foreach", "caret", "e1071", "rpart", "tree", "RWeka", "C50")
+foreach(i = archive) %do% install(i)
+
+```
+  El dataset con el cual se hará el procesación es car, por lo que procedemos a descargarlo:
+
+```{r, echo=FALSE, cache=TRUE}
+#2._ Obtener Dataset car
+file<- "http://archive.ics.uci.edu/ml/machine-learning-databases/car/car.data"
+Data<-read.csv(file, header = FALSE, sep = ",")
+Data
+```
+  Como no se desea trabajar con todas la variables del dataset, sólo con las más "significativas", se realiza una reducción de dimensionalidad con la función de RWeka AttributeSelection, obteniendo: 
+
+```{r, echo=FALSE}
+#3._ Selección de variables
+library("RWeka")
+AS<-  make_Weka_filter("weka.filters.supervised.attribute.AttributeSelection") 
+DatosS=AS(Data)
+DatosS
+```
+  Ahora con este nuevo dataset usamos muestreo aleatorio con 80% de los datos para entrenamiento y 20% para prueba.
+
+```{r, echo=FALSE}
+#4._ Particionamiento de la data en 80% entrenamiento y 20% prueba
+library (caret)
+set.seed ( 3456 ) 
+trainIndex  <-  createDataPartition (DatosS,  p  =  .8 , list  =  FALSE, times= 1) 
+DataTrain <- DatosS[-trainIndex]
+DataTest <- DatosS[trainIndex]
+```
+  Generación de modelos:
+
+```{r, echo=FALSE}
+#5._ Generar modelo e imprimir árbol
+library(grid)
+library(partykit)
+
+str(DatosS)
+m1 <- J48(V1~., data = DatosS)
+m1
+if(require("partykit", quietly = TRUE)) plot(m1)
+
+m2 <- J48(V7~., data = DatosS)
+m2
+if(require("partykit", quietly = TRUE)) plot(m2)
+
+```
+```{r, echo=FALSE}
+#6._ Uso de funcion predict()
+table(DataTest$`V1`, predict(m1))
+if(require("partykit", quietly = TRUE)) plot(m1)
+
+```
+```{r, echo=FALSE}
+#7._ Matriz de confusion
+#confusionMatrix(m1, positive = NULL, prevalence = NULL)
+
+```
+
+
+
