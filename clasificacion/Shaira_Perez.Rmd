@@ -10,7 +10,7 @@ msg = "Eval debe estar en TRUE, la primera vez que cargo el archivo no se evalua
 print(msg)
 ```
 
-```{r, echo=FALSE, eval=TRUE}
+```{r echo=FALSE, eval=TRUE}
 #1._ Importar librerías necesarias para .Rmd
 #Creamos la función que recibe los paquetes
 install = function(pkg){
@@ -31,7 +31,7 @@ foreach(i = archive) %do% install(i)
 ```
   El dataset con el cual se hará el procesación es car, por lo que procedemos a descargarlo:
 
-```{r, echo=FALSE, cache=TRUE}
+```{r echo=FALSE, cache=TRUE}
 #2._ Obtener Dataset car
 file<- "http://archive.ics.uci.edu/ml/machine-learning-databases/car/car.data"
 Data<-read.csv(file, header = FALSE, sep = ",")
@@ -39,7 +39,7 @@ Data
 ```
   Como no se desea trabajar con todas la variables del dataset, sólo con las más "significativas", se realiza una reducción de dimensionalidad con la función de RWeka AttributeSelection, obteniendo: 
 
-```{r, echo=FALSE}
+```{r echo=FALSE}
 #3._ Selección de variables
 library("RWeka")
 AS<-  make_Weka_filter("weka.filters.supervised.attribute.AttributeSelection") 
@@ -48,7 +48,7 @@ DatosS
 ```
   Ahora con este nuevo dataset usamos muestreo aleatorio con 80% de los datos para entrenamiento y 20% para prueba.
 
-```{r, echo=FALSE}
+```{r echo=FALSE}
 #4._ Particionamiento de la data en 80% entrenamiento y 20% prueba
 library (caret)
 set.seed ( 3456 ) 
@@ -58,7 +58,7 @@ DataTest <- DatosS[trainIndex]
 ```
   Generación de modelos:
 
-```{r, echo=FALSE}
+```{r echo=FALSE}
 #5._ Generar modelo e imprimir árbol
 library(grid)
 library(partykit)
@@ -73,13 +73,13 @@ m2
 if(require("partykit", quietly = TRUE)) plot(m2)
 
 ```
-```{r, echo=FALSE}
+```{r echo=FALSE}
 #6._ Uso de funcion predict()
 table(DataTest$`V1`, predict(m1))
 if(require("partykit", quietly = TRUE)) plot(m1)
 
 ```
-```{r, echo=FALSE}
+```{r echo=FALSE}
 #7._ Matriz de confusion
 #confusionMatrix(m1, positive = NULL, prevalence = NULL)
 
