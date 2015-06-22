@@ -1,0 +1,165 @@
+---
+title: "Árboles de Decisión sobre *Lenses* dataset"
+author: "Rosmeli Quintero, Samuel Nacache"
+date: "June 19, 2015"
+output: html_document
+---
+El dataset *lenses* contiene información sobre los pacientes y síntomas médicos oftalmólogos que presenta el mismo, y a partir de esta información se quiere predecir el diagnóstico de si necesita lentes de contacto o no, y qué tipo de lentes.
+
+El dataset original sólo tiene atributos numéricos que representan una característica. Tiene la siguiente estructura tiene 5 columnas:  
+
+* Edad:
+    + 1: Jóven
+    + 2: Pre-presbicia
+    + 3: Presbicia
+* Preescripción:
+    + 1: Miope
+    + 2: Hipermétrope
+* Astigmático:
+    + 1: No
+    + 2: Si
+* Producción de lágrimas:
+    + 1: Reducida
+    + 2: Normal
+* Clase:
+    + 1: El paciente debe usar lentes de contacto duros
+    + 2: El paciente de usar lentes de contacto blandos
+    + 3: El paciente no debe usar lentes de contacto
+
+#Pre-Procesamiento
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(RCurl)
+library(RWeka)
+library(rpart)
+library(rpart.plot)
+library(caret)
+library(devtools)
+url = getURL("https://archive.ics.uci.edu/ml/machine-learning-databases/lenses/lenses.data",ssl.verifypeer=0L, followlocation=1L)
+data.set = read.csv(text = url, header = F, sep = "")
+data.set = subset(data.set, select = -c(V1))
+names(data.set) = c("EDAD", "PRESCRIPCION", "ASTIGMATICO", "LAGRIMAS", "CLASE")
+
+```
+```{r, echo=FALSE}
+data.set
+
+```
+
+Utilizamos la función *Factor()* para transformar atributos numéricos a nominales.  
+
+```{r}
+data.set$EDAD <- factor(data.set$EDAD, labels = c("Joven", "Presbicia", "PrePresbicia"))
+data.set$PRESCRIPCION <- factor(data.set$PRESCRIPCION, labels = c("Miope", "Hipermetrope"))
+data.set$ASTIGMATICO <- factor(data.set$ASTIGMATICO, labels = c("No", "Si"))
+data.set$LAGRIMAS <- factor(data.set$LAGRIMAS, labels = c("Reducida", "Normal"))
+data.set$CLASE <- factor(data.set$CLASE, labels = c("Duro", "Blando", "Ninguno"))
+data.set
+
+```
+
+Separamos la data total en dos data frames: Entrenamiento con 20 instancias y Prueba con 4 instancias. El criterio de separación fue preservar la mayor variedad posible en los valores de las instancias de prueba.  
+
+Set de **entrenamiento**:
+```{r}
+training = data.set[-c(2,8,15,17),]
+training
+
+```
+
+Set de **pruebas**:
+```{r}
+testing = data.set[c(2,8,15,17),]
+testing
+
+```
+
+#Generación y pruebas de Árbol de Decisión
+
+###C4.5
+
+Utilizando el algoritmo **_C4.5_** cuya implementación se denomina *J48*, generamos el árbol de decisión correspondiente a este dataset. Tomando el cuenta que la clase está basada en todos los atributos del dataset.  
+
+```{r, warning=FALSE, message=FALSE, fig.align='center'}
+mytree = J48(formula = training$CLASE~., data = training)
+if(require("party", quietly = TRUE)) plot(mytree)
+
+```
+
+Usando el método **predict()** predecimos las 4 entradas de prueba escogidas anteriormente (_testing_) y se tiene que:  
+
+
+```{r}
+testJ48 = predict(mytree, testing)
+
+```
+
+
+```{r, echo=FALSE}
+ResultadosTest = testJ48
+ClaseOriginal = testing$CLASE
+res = data.frame(ClaseOriginal, ResultadosTest)
+res
+
+```
+
+####Estadísticas y Matriz de Confusión
+
+```{r}
+trueClasses = testing$CLASE
+confusionMatrix(testJ48, trueClasses)
+
+```
+
+
+###RPART
+
+Utilizando el algoritmo **_RPART_**, y con parámetro de valor mínimo para dividir un nodo igual a 5, tenemos el siguiente árbol.  
+
+```{r,fig.align='center'}
+rptree = rpart(formula = training$CLASE~., data = training, method = "class", control=rpart.control(minsplit=5, cp=0.001))
+rpart.plot(rptree)
+
+```
+
+Al usar el método **predict()** se tiene:
+
+```{r}
+classes = sort(unique(data.set$CLASE))
+testRP = predict(rptree, testing, type = "vector")
+testRP = classes[testRP]
+
+```
+
+```{r, echo=FALSE}
+ResultadosTest = testRP
+res = data.frame(ClaseOriginal, ResultadosTest)
+res
+
+```
+
+####Estadísticas y Matriz de Confusión
+
+```{r}
+confusionMatrix(testRP, trueClasses)
+
+```
+  
+  
+En conclusión ambos algoritmos, con el mismo set de entrenamiento y prueba, tienen el mismo desempeño en este dataset. Ninguno de los dos completamemente efectivo. 
+
+Notamos que, al tomar otros sets de entrenamiento y prueba, los resultados cambian. Por ejemplo, al tomar las primeras 4 instancias (jóvenes miopes), y del 9 al 11 (con Presbicia miopes) el modelo es completamente efectivo y no tiene errores. 
+
+Además, con estos sets de entrenamiento y prueba, el algoritmo de RPART puede generar un arbol de un nivel menos que el algoritmo J48 y aún así tener un igual desempeño. Lo que nos podría llevar a pensar que la columna EDAD es depreciable, pero creo que se necesitarían más pruebas para hacer una afirmación así. 
+
+
+
+
+
+
+
+
+
+
+
+
