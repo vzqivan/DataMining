@@ -1,0 +1,73 @@
+---
+title: "Tarea 1"
+author: "Ivan Vazquez - Brayhan Villalba"
+date: "18 de junio de 2015"
+output: ioslides_presentation
+runtime: shiny
+---
+##Obtención de los datos
+-Dataset
+```{r echo=TRUE, cache =TRUE }
+data <- read.csv(url("http://archive.ics.uci.edu/ml/machine-learning-databases/car/car.data"), header = FALSE, col.names=c("buying","maint", "doors", "persons", "lug_boot", "safety","class"))
+```
+
+##Preprocesamiento
+```{r echo=FALSE}
+message("Se instalan paquetes")
+install = function(pkg){
+  #Si ya estÃ¡ instalado, no lo instala.
+  if (!require(pkg, character.only = TRUE)) {
+    install.packages(pkg)
+    if (!require(pkg, character.only = TRUE)) stop(paste("load failure:", pkg))
+  }
+}
+
+install("foreach")
+
+archive = c("rJava", "shiny", "rpart.plot", "rmarkdown", "foreach", "caret", "e1071", "rpart", "tree", "RWeka", "C50")
+foreach(i = archive) %do% install(i)
+
+data$buying <- as.factor(data$buying)
+data$maint <- as.factor(data$maint)
+data$doors <- as.factor(data$doors)
+data$persons <- as.factor(data$persons)
+data$lug_boot <- as.factor(data$lug_boot)
+data$safety <- as.factor(data$safety)
+
+DT<-as.data.frame(data)
+
+AttributeSelection <- make_Weka_filter("weka.filters.supervised.attribute.AttributeSelection")
+
+rd=AttributeSelection(class ~ buying + maint + doors + persons + lug_boot + safety, DT, control = Weka_control(E = "weka.attributeSelection.InfoGainAttributeEval", S = "weka.attributeSelection.Ranker -T -1.7976931348623157E308 -N 4"))
+```
+
+##División de los datos (Test/Training)
+```{r echo=2:3}
+particion = createDataPartition(y=rd$class, p= 0.8, list=FALSE, times=1)
+entrenamiento <- rd[particion,]
+prueba <- rd[-particion,]
+```
+
+##Modelo C4.5
+```{r echo=FALSE}
+arbol <- J48(class ~., rd, control=Weka_control(C = 0.25, M=40))
+plot(arbol)
+```
+
+## C4.5: Predicción y Matriz de Confusión
+```{r echo=FALSE}
+pruebaf <- prueba 
+pruebaf$class=NULL
+confusionMatrix(predict(arbol,pruebaf,type="class"), prueba$class)
+```
+
+## Modelo Rpart
+```{r echo=FALSE}
+fit <- rpart(class ~ .,rd, method="class")
+rpart.plot(fit)
+```
+
+## Rpart: Predicción y Matriz de Confusión
+```{r echo=FALSE}
+confusionMatrix(predict(fit,pruebaf,type="class"), prueba$class)
+```
