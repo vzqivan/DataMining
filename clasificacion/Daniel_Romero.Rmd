@@ -26,7 +26,7 @@ url = "http://archive.ics.uci.edu/ml/machine-learning-databases/car/car.data"
 data.set = read.csv(file = url,header = FALSE)
 ```
 
-# Usé el criterio B, y no modifique el data set porque no conozco el contexto del problema y prefiero no perder ningun dato aunque este pueda no ser útil
+# UsÃ© el criterio B, y no modifique el data set porque no conozco el contexto del problema y prefiero no perder ningun dato aunque este pueda no ser Ãºtil
 ```{r}
 library("caret")
 MuestreoAleatorio = createDataPartition(data.set$V1, times=1, p=0.8, list=FALSE)
@@ -41,7 +41,7 @@ plot(arbolUno)
 library("rpart.plot")
 arbolDos = rpart(training$V7~., data=training, method="class")
 rpart.plot(arbolDos)
-```{r}
+```
 
 ```{r}
 confusionMatrix(arbolUno$predictions, training$V7 )
