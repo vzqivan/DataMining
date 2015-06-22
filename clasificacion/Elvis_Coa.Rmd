@@ -1,0 +1,81 @@
+---
+title: "Laboratorio"
+author: "Elvis"
+date: "16 de junio de 2015"
+output: html_document
+---
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+En el siguiente documento se han omitido los acentos
+
+
+```{r, echo=FALSE}
+#Carga de librerias
+library(devtools)
+library(rpart.plot)
+source_url("https://raw.githubusercontent.com/belgrades/DataMining/master/install.R")
+WPM("install-package", "simpleEducationalLearningSchemes")
+WPM("load-package", "simpleEducationalLearningSchemes")
+ID3 <- make_Weka_classifier("weka/classifiers/trees/Id3") 
+```
+
+Extraccion y transformacion de datos. En la transformacion se cambian los datos que poseen un valor numero a un valor nominal
+```{r}
+UrlLenses="https://archive.ics.uci.edu/ml/machine-learning-databases/lenses/lenses.data"
+
+data.set = read.csv(UrlLenses, header = FALSE, sep="")
+data.set= subset(x= data.set, select =c("V2","V3","V4","V5","V6"))
+View(data.set)
+colnames(data.set) <- c("Age", "Prescription","Astigmatic","Tear","class")
+data.set$Age <- factor(data.set$Age, labels = c("Young","Pre-presbyopic","Presbyopic")) 
+data.set$Prescription <- factor(data.set$Prescription, labels = c("Myope","Hypermetrope"))
+data.set$Astigmatic <- factor(data.set$Astigmatic, labels = c("No","Yes"))
+data.set$Tear <- factor(data.set$Tear, labels = c("Reduced","Normal"))
+data.set$class <- factor(data.set$class, labels = c("Hard","Soft","None"))
+```
+Separaremos nuestro set de datos en un grupo de entrenamiento y un grupo de prueba, para esto escogeremos 20 individuos para el primer grupo y 4 para el segundo.
+
+Se tomo a los individuos 2, 5, 12 y 18 para nuestro grupo de prueba.
+Se tomo 1 joven uno con produccion de lagrimas normal.
+Se tomaron 2 personas pre-presbyopic que tiene produccion de lagrimas reducida.
+Se tomo a una persona presbyopic con produccion de lagrimas reducida.
+Adicionalmente estas 4 personas, 2 tienen astigmatismo, 2 con miopia y 2 con hipermetropia.
+
+```{r}
+arreglo = c(2,9,15,23)
+test=data.set[arreglo,]
+training=data.set[-arreglo,]
+arbol=J48(formula=training$class~., data=training)
+```
+
+Con nuestro set de entranamiento crearemos nuestro arbol de decision utilizando la funcion J48, y utilizaremos nuestro modelo para predecir la clase a la que pertenecen nuestros individuos en el grupo de prueba.
+
+```{r}
+plot(arbol)
+prediccion <-predict(arbol, test, type = "class")
+prediccion
+```
+
+
+```{r}
+confusionMatrix(test$class, prediccion, dnn = c("Prediction", "Reference"))
+```
+
+El modelo generado por J48 para nuestro caso de estudio tiene una certeza del 100%. 
+
+Ahora utilizando el mismo set de entranamiento crearemos nuestro arbol de decision utilizando la funcion Rpart, y utilizaremos nuestro modelo para predecir la clase a la que pertenecen nuestros individuos en el grupo de prueba.
+
+```{r}
+model = rpart(class ~ ., training, method = "class")
+plot(model,compress = TRUE, uniform = TRUE,branch = 0)
+
+prediccion <-predict(model, test, type = "class")
+prediccion
+```
+
+```{r}
+confusionMatrix(test$class, prediccion, dnn = c("Prediction", "Reference"))
+```
+
+El modelo generado por Rpart para nuestro caso de estudio tiene una certeza del 75%. 
