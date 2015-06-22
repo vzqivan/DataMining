@@ -9,6 +9,9 @@ output: html_document
 2) Sección de descarga del dataset lenses
 
 ```{r}
+#est?s asumiendo que las librer?as est?n instaladas.
+# Usa install.R para mejorar esto
+
 library(rpart)
 library(rpart.plot)
 library(caret)
