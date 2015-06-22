@@ -1,4 +1,4 @@
-
+# Genera el .Rmd respectivo con los comentarios que quieras agregar, esto es un .R nada mas
 
 #Creamos la función que recibe los paquetes
 install = function(pkg){
