@@ -2,7 +2,7 @@
 install = function(pkg){
   #Si ya está instalado, no lo instala.
   if (!require(pkg, character.only = TRUE)) {
-    install.packages(pkg, , repos = "http:/cran.rstudio.com")
+    install.packages(pkg, repos = "http:/cran.rstudio.com")
     if (!require(pkg, character.only = TRUE)) stop(paste("load failure:", pkg))
   }
 }
