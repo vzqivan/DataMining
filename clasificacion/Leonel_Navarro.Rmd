@@ -1,0 +1,122 @@
+---
+title: "Laboratorio 1"
+author: "Leonel Navarro"
+date: "18 de junio de 2015"
+output: html_document
+---
+
+
+
+```{r}
+
+
+
+#Creamos la función que recibe los paquetes
+install = function(pkg){
+  #Si ya está instalado, no lo instala.
+  if (!require(pkg, character.only = TRUE)) {
+    install.packages(pkg)
+    if (!require(pkg, character.only = TRUE)) stop(paste("load failure:", pkg))
+  }
+}
+
+#Instalamos primero "foreach"
+install("foreach")
+
+#Seleccionamos los archivos que queremos instalar
+archive = c("rJava", "shiny", "rmarkdown", "foreach", "caret", "e1071", "rpart", "tree", "RWeka", "C50","rpart.plot")
+foreach(i = archive) %do% install(i)
+```
+
+##Descarga del Dataset
+```{r}
+library(RWeka)
+library(rpart)
+library(caret)
+
+dataset = read.csv("http://archive.ics.uci.edu/ml/machine-learning-databases/car/car.data", col.names = c("buying","maint","doors","persons","lug_boot","safety","class_value"),header=TRUE)
+
+dataset <- as.data.frame(dataset)
+
+dataset$buying <- as.factor(dataset$buying)
+dataset$maint <- as.factor(dataset$maint)
+dataset$doors <- as.factor(dataset$doors)
+dataset$persons <- as.factor(dataset$persons)
+dataset$lug_boot <- as.factor(dataset$lug_boot)
+dataset$safety <- as.factor(dataset$safety)
+dataset$class_value <- as.factor(dataset$class_value)
+
+```
+
+##Selección de Atributos con Rweka
+```{r}
+library(RWeka)
+library(rpart)
+library(caret)
+selection = make_Weka_filter("weka.filters.supervised.attribute.AttributeSelection")
+
+out = selection(class_value ~ buying + maint + doors + persons + lug_boot + safety, dataset, control = Weka_control(E= "weka.attributeSelection.GainRatioAttributeEval ", S= "weka.attributeSelection.Ranker -T -1.7976931348623157E308 -N 3"))
+```
+
+##Muestreo aleatorio para datos de entrenamiento y prueba
+```{r}
+library(RWeka)
+library(rpart)
+library(caret)
+trainIndex <- createDataPartition(out$class_value, p = 0.8, list = FALSE,times = 1)
+
+head(trainIndex)
+
+entrenamiento <- out[ trainIndex,]
+
+prueba <- out[-trainIndex,]
+
+entrenamiento <- as.data.frame(entrenamiento)
+entrenamiento$safety <- as.factor(entrenamiento$safety)
+entrenamiento$persons <- as.factor(entrenamiento$persons)
+entrenamiento$buying <- as.factor(entrenamiento$buying)
+entrenamiento$class_value <- as.factor(entrenamiento$class_value)
+
+prueba$safety <- as.factor(prueba$safety)
+prueba$persons <- as.factor(prueba$persons)
+prueba$buying <- as.factor(prueba$buying)
+prueba$class_value <- as.factor(prueba$class_value)
+prueba <- as.data.frame(prueba)
+prueba <- prueba[,-c(4)]
+```
+
+
+##Algoritmo C4.5 (J48) para arboles de decisión
+```{r}
+library(RWeka)
+library(rpart)
+library(caret)
+tree1 <- J48(class_value ~ ., entrenamiento,control = Weka_control(C="0.15", M="20"))
+plot(tree1)
+
+```
+
+##Rpart para arboles de decisión
+```{r}
+library(RWeka)
+library(rpart)
+library(caret)
+tree2 <- rpart(class_value~ ., dataset[trainIndex,], method = "class")
+rpart.plot(tree2)
+
+
+
+```
+
+##Matrices de confusión de los arboles, respectivamente
+```{r}
+library(RWeka)
+library(rpart)
+library(caret)
+confusionMatrix( tree1$predictions, entrenamiento$class_value)
+#La matriz de confusión del rpart da error
+#confusionMatrix(predict(tree2, prueba, type="class"), entrenamiento$class_value)
+
+```
+
+
