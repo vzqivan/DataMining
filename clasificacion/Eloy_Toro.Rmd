@@ -1,0 +1,56 @@
+---
+title: "Lab1"
+author: "Eloy Toro"
+date: "18 de junio de 2015"
+output: pdf_document
+---
+
+```{r echo=FALSE}
+url = "http://archive.ics.uci.edu/ml/machine-learning-databases/car/car.data"
+data.set = read.csv(url, header = F, sep = ",")
+names(data.set) <- c("buying", "maint", "doors", "persons", "lug_boot", "safety", "class")
+training_size = floor(0.8 * nrow(data.set))
+test_size = floor(0.2 * nrow(data.set))
+set.seed(111)
+index = sample(seq_len(nrow(data.set)), size = training_size)
+training_set = data.set[index,]
+test_set = data.set[-index,]
+```
+
+Realizamos una iteracion de InformationGain sobre la data particionando sobre la clase de los elementos para ver cual particion genera mayor ganancia de informacion.
+
+```{r}
+RWeka::InfoGainAttributeEval(class ~ . , data = data.set)
+```
+
+Se puede ver que la partici?n que genera mayor ganancia es la de safety, la elegimos como primer paso en nuestro arbol de desici?n
+
+```{r}
+RWeka::InfoGainAttributeEval(safety ~ buying+maint+doors+persons+lug_boot , data = data.set)
+```
+
+Ahora se puede ver que el InformationGain de cualquier partici?n posible es muy bajo, por lo que cambiaremos de criterio.
+
+Utilizando el sistema de training de caret:
+
+```{r, echo=FALSE}
+training = caret::train(class ~ ., data.set, method="rpart",cp=0.002, maxdepth=5)
+plot(training$finalModel)
+text(training$finalModel)
+```
+
+Generando matriz de confusion
+
+```{r}
+small_test_set = test_set[sample(seq_len(nrow(test_set)), 4),]
+tree_model = rpart::rpart(class ~ ., data=training_set)
+prediction = predict(tree_model, small_test_set, type="class")
+table(small_test_set[, "class"], prediction)
+```
+
+Generando arbol J48
+
+```{r, echo=FALSE}
+j48 = RWeka::J48(class ~ ., data=training_set)
+plot(j48)
+```
