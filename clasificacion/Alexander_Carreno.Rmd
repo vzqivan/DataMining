@@ -1,0 +1,79 @@
+---
+title: "Lab#1"
+author: "Alexander Carreño"
+date: "Thursday, June 18, 2015"
+output: html_document
+---
+
+```{r echo = F, warning = T, message=F}
+#Creamos la funciÃ³n que recibe los paquetes
+install = function(pkg){
+  #Si ya estÃ¡ instalado, no lo instala.
+  if (!require(pkg, character.only = TRUE)) {
+    install.packages(pkg)
+    if (!require(pkg, character.only = TRUE)) stop(paste("load failure:", pkg))
+  }
+}
+
+#Instalamos primero "foreach"
+install("foreach")
+
+#Seleccionamos los archivos que queremos instalar
+archive = c("rJava", "rpart.plot", "shiny", "rmarkdown", "foreach", "caret", "e1071", "rpart", "tree", "RWeka", "C50")
+foreach(i = archive) %do% install(i)
+```
+
+```{r}
+url="https://archive.ics.uci.edu/ml/machine-learning-databases/lenses/lenses.data"
+data.set=read.csv(file=url(url), sep="",header=F)
+data.set=subset(x=data.set, select=c("V2","V3","V4","V5","V6"))
+names(data.set)=c("age","prescription","astigmatic","tear","class")
+head(data.set)
+
+data.set$age[data.set$age==1]<-"young"
+data.set$age[data.set$age==2]<-"pre-presbyopic"
+data.set$age[data.set$age==3]<-"presbyopic"
+
+data.set$prescription[data.set$prescription==1]<-"myope"
+data.set$prescription[data.set$prescription==2]<-"hypermetrope"
+
+data.set$astigmatic[data.set$astigmatic==1]<-"no"
+data.set$astigmatic[data.set$astigmatic==2]<-"yes"
+
+data.set$tear[data.set$tear==1]<-"reduced"
+data.set$tear[data.set$tear==2]<-"normal"
+
+data.set$class[data.set$class==1]<-"hard contact lenses"
+data.set$class[data.set$class==2]<-"soft contact lenses"
+data.set$class[data.set$class==3]<-"not be fitted with contact lenses"
+
+data.set$age<-as.factor(data.set$age)
+data.set$prescription<-as.factor(data.set$prescription)
+data.set$astigmatic<-as.factor(data.set$astigmatic)
+data.set$tear<-as.factor(data.set$tear)
+data.set$class<-as.factor(data.set$class)
+
+prueba <-c(1,2,3,4)
+training<-data.set[-prueba, ]
+prueba <- data.set[prueba, ]
+head(prueba)
+head(training)
+
+model1<-J48(formula=training$class~., data=training)
+plot(model1)
+
+
+model2<-rpart(formula=training$class~., data=training, method="class", control=rpart.control(minsplit = 3, cp = 0.01))
+
+rpart.plot(model2)
+
+prediccion1<-predict(model1, prueba, type="class")
+Matrix1<-confusionMatrix(prediccion1, prueba$class)
+
+head(Matrix1)
+
+prediccion2<-predict(model2, prueba, type="class")
+Matrix2<-confusionMatrix(prediccion2, prueba$class)
+
+head(Matrix2)
+```
