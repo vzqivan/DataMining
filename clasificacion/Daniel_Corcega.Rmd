@@ -1,0 +1,95 @@
+---
+title: "Labarotario"
+author: "Daniel Corcega"
+date: "16 de junio de 2015"
+output: html_document
+---
+
+Antes de empezar haremos la carga de las librerias necesarias para la realizacion de este laboratorio.
+
+```{r}
+
+library(devtools)
+
+source_url("https://raw.githubusercontent.com/belgrades/DataMining/master/install.R")
+
+archive2 = c("partykit", "party", "rpart.plot")
+foreach(i = archive2) %do% install(i)
+```
+
+Ahora, cargaremos el set de datos a utilizar para hacer el arbol de decision desde su direccion URL.
+
+Asimismo renombraremos las columnas de nuestro set de datos para que se entienda de manera mas sencilla.
+
+```{r}
+url <- "https://archive.ics.uci.edu/ml/machine-learning-databases/lenses/lenses.data"
+datos<-read.csv(url, sep = "",header = FALSE, row.names = 1)
+names(datos)<- c("age","spectacle","astigmatic","tear", "class")
+```
+
+Cambiaremos los valores numericos por sus homologos en nominal. 
+Y convertimos los valores a factores para ser utilizados por los algoritmos de arboles de decision. 
+```{r}
+datos$age <- ifelse(datos$age == 1,"young", ifelse(datos$age == 2,"pre-presbyopic","presbyopic"))
+datos$spectacle <- ifelse(datos$spectacle == 1, "myope","hypermetrope")
+datos$astigmatic <- ifelse(datos$astigmatic == 1, "yes","no")
+datos$tear <- ifelse(datos$tear == 1, "normal", "reduced")
+datos$class <- ifelse(datos$class == 1,"hard", ifelse(datos$class == 2,"soft", "none"))
+
+datos$age <- as.factor(datos$age)
+datos$spectacle <- as.factor(datos$spectacle)
+datos$astigmatic <- as.factor(datos$astigmatic)
+datos$tear <- as.factor(datos$tear)
+datos$class <- as.factor(datos$class)
+```
+
+Separaremos nuestro set de datos en un grupo de entrenamiento y un grupo de prueba, para esto escogeremos 20 individuos para el primer grupo y 4 para el segundo.
+
+Se tomo a los individuos 2, 5, 12 y 18 para nuestro grupo de prueba.
+Se tomo dos jovenes uno con produccion de lagrimas normal y otro reducido.
+Se tomo a una persona pre-presbyopic que tiene produccion de lagrimas reducida.
+Se tomo a una persona presbyopic con produccion de lagrimas reducida.
+Del grupo de prueba se tiene adicionalmente de las 4 personas mencionada anteriormente, 3 con astigmatismo, dos con miopia y dos con hipermetropia. 
+```{r}
+muestra <- c(2,5,12,18)
+entrenamiento <- datos[-muestra,]
+prueba <- datos[muestra,]
+```
+
+Ahora utilizando el set de entranamiento crearemos nuestro arbol de decision utilizando la funcion rpart, y utilizaremos nuestro modelo para predecir la clase a la que pertenecen nuestros individuos en el grupo de prueba.
+
+```{r}
+model = rpart(class ~ ., entrenamiento, method = "class")
+rpart.plot(model,compress = TRUE, uniform = TRUE, branch = 0)
+
+prediccion <-predict(model, prueba, type = "class")
+prediccion
+
+```
+Podemos observar en el arbol que la variable importante que utiliza para la prediccion es el radio de produccion de lagrimas, lo que puede ser una mala forma para predecir la clase de los individuos siguientes.
+
+Ahora mostraremos la matriz de confusion para nuestro modelo generado con rpart.
+
+```{r}
+confusionMatrix(prueba$class, prediccion, dnn = c("Prediction", "Reference"))
+```
+
+El modelo generado por rpart para nuestro caso de estudio tiene una certeza del 50%. 
+
+Ahora utilizando el mismo set de entranamiento crearemos nuestro arbol de decision utilizando la funcion J48, y utilizaremos nuestro modelo para predecir la clase a la que pertenecen nuestros individuos en el grupo de prueba.
+```{r}
+modelj =  J48(class ~ ., data = entrenamiento)
+plot(modelj)
+
+predj <- predict(modelj, prueba, type = "class")
+predj
+```
+
+Como observamos en la grafica el arbol de decision generado por J48 toma como principal regla la produccion de lagrimas, y luego si la persona sufre de agtismatismo si y solo si tiene produccion de lagrimas reducidas.
+
+Ahora mostraremos la matriz de confusion para nuestro modelo generado con J48.
+```{r}
+confusionMatrix(prueba$class, predj,dnn = c("Prediction", "Reference"))
+```
+
+El modelo generado por J48 para nuestro caso de estudio tiene una certeza del 50%. 
