@@ -2,7 +2,7 @@
 title: "Laboratorio Arboles de Decisión"
 author: "Jose Da Silva"
 date: "16 de junio de 2015"
-output: html_document
+output: pdf_document
 ---
 
 ```{r, echo = FALSE}
@@ -99,7 +99,7 @@ TreeRpart=rpart(formula = form, data = trainset,method = "class")
 
 ##### 5.2) Imprimir Árbol:
 
-```{r, fig.align='center'}
+```{r}
 plot(TreeJ48)
 rpart.plot(x = TreeRpart)
 ```
