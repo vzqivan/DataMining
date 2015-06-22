@@ -5,6 +5,13 @@ date: "18 de junio de 2015"
 output: ioslides_presentation
 runtime: shiny
 ---
+
+
+```{r}
+# Cambien el archivo, esto es una presentación de Shiny. Yo quiero un Rmd normal para generar el pdf.
+```
+
+
 ##Obtención de los datos
 -Dataset
 ```{r echo=TRUE, cache =TRUE }
