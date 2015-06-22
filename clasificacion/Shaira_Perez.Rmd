@@ -66,17 +66,19 @@ library(partykit)
 str(DatosS)
 m1 <- J48(V1~., data = DatosS)
 m1
-if(require("partykit", quietly = TRUE)) plot(m1)
+plot(m1)
 
 m2 <- J48(V7~., data = DatosS)
 m2
-if(require("partykit", quietly = TRUE)) plot(m2)
+plot(m2)
 
 ```
 ```{r echo=FALSE}
 #6._ Uso de funcion predict()
-table(DataTest$`V1`, predict(m1))
-if(require("partykit", quietly = TRUE)) plot(m1)
+
+# VERIFICAR TIPO DE DATO DE DATATEST
+table(DataTest$V1, predict(m1))
+plot(m1)
 
 ```
 ```{r echo=FALSE}
