@@ -2,7 +2,7 @@
 title: "Árboles de Decisión sobre *Lenses* dataset"
 author: "Rosmeli Quintero, Samuel Nacache"
 date: "June 19, 2015"
-output: html_document
+output: pdf_document
 ---
 El dataset *lenses* contiene información sobre los pacientes y síntomas médicos oftalmólogos que presenta el mismo, y a partir de esta información se quiere predecir el diagnóstico de si necesita lentes de contacto o no, y qué tipo de lentes.
 
@@ -116,7 +116,7 @@ confusionMatrix(testJ48, trueClasses)
 
 Utilizando el algoritmo **_RPART_**, y con parámetro de valor mínimo para dividir un nodo igual a 5, tenemos el siguiente árbol.  
 
-```{r,fig.align='center'}
+```{r}
 rptree = rpart(formula = training$CLASE~., data = training, method = "class", control=rpart.control(minsplit=5, cp=0.001))
 rpart.plot(rptree)
 
