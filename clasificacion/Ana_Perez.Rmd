@@ -67,5 +67,6 @@ Prediccion <- predict(ModeloArbol, mydataText,type="class")
 Por ultimo, generamos la matriz de confusion.
 
 ```{r}
-MC <- table(mydataText[, "safety"],Prediccion);
+MC <- table(mydataText[, "safety"],Prediccion)
 ```
+
