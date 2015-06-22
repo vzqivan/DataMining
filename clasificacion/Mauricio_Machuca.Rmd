@@ -1,0 +1,92 @@
+---
+title: "Laboratorio Arboles de Decision"
+author: "Mauricio Machuca"
+date: "18 de junio de 2015"
+output: pdf_document
+---
+#Carga de librerias
+```{r}
+library("RWeka")
+library("rpart")
+library("rpart.plot")
+library("caret")
+```
+
+#Datos(luego de transformar los atributos)
+
+```{r, echo=FALSE}
+
+datalab<-read.csv(file = "http://archive.ics.uci.edu/ml/machine-learning-databases/lenses/lenses.data",header = F, sep = "")
+datalab[1]<-NULL
+
+colnames(datalab)<-c("age","spect","astig","tearRate","class")
+
+age<-c("young","pre-presbyopic","presbyopic")
+spec<-c("myope","hypermetrope") 
+astig<-c("no","yes") 
+tear<-c("reduced","normal")
+class<-c("hardlenses","softlenses","nolenses")
+
+datalab$age<-factor(datalab$age,labels = age)
+datalab$spect<-factor(datalab$spect,labels = spec)
+datalab$astig<-factor(datalab$astig,labels = astig)
+datalab$tearRate<-factor(datalab$tearRate,labels = tear)
+datalab$class<-factor(datalab$class,labels = class)
+
+datalab
+```
+#Seleccionando datos para entrenamiento y prueba
+
+###Datos para entrenamiento:
+```{r}
+datat<-datalab[-c(1,10,18,23),]
+datat
+```
+###Datos para prueba:
+```{r}
+datap<-datalab[c(1,10,18,23),]
+datap
+
+
+```
+
+
+#Generando Arboles de decision
+###Con Algoritmo J48:
+```{r}
+arbolj48<-J48(formula = class~.,data = datat)
+plot(arbolj48)
+```
+
+###Con Algoritmo Rpart:
+```{r}
+arbolrpart<-rpart(formula = class~., data = datat ,minsplit=8 )
+rpart.plot(arbolrpart)
+```
+
+
+#Obteniendo Predicciones
+```{r}
+prediccionJ48<-predict(object = arbolj48, datap)
+prediccionJ48
+prediccionrpart<-predict(object = arbolrpart,datap)
+```
+```{r, echo=F}
+aux<-datap$class
+for(i in 1:4){
+  aux[[i]]<-colnames(prediccionrpart)[as.logical(prediccionrpart[i,])]
+}
+```
+```{r}
+aux
+```
+
+
+
+#Matrices de confusion
+```{r}
+mconfusionJ48<-confusionMatrix(data = prediccionJ48, reference = datap$class)
+mconfusionJ48$table
+mconfusionrpart<-confusionMatrix(data = aux, reference = datap$class)
+mconfusionrpart$table
+```
