@@ -8,7 +8,7 @@ output: html_document
 Antes de empezar haremos la carga de las librerias necesarias para la realizacion de este laboratorio.
 
 ```{r}
-
+install.packages("devtools", repos = "http:/cran.rstudio.com")
 library(devtools)
 
 source_url("https://raw.githubusercontent.com/belgrades/DataMining/master/install.R")
