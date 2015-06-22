@@ -1,0 +1,88 @@
+---
+title: "Laboratorio Árboles de Decisión"
+author: "Emmanuel"
+date: "Tuesday, June 16, 2015"
+output: html_document
+---
+
+# Solución laboratorio Árboles de decisión
+
+En el laboratorio se solicito un archivo .Rmd donde se importaran las librerias necesarias y un archivo al cual se le aplicaria el proceso de transformación de datos numéricos a nominales conforme a la información incluida en el archivo.
+
+
+```{r}
+#Creamos la función que recibe los paquetes
+install = function(pkg){
+  #Si ya está instalado, no lo instala.
+  if (!require(pkg, character.only = TRUE)) {
+    install.packages(pkg)
+    if (!require(pkg, character.only = TRUE)) stop(paste("load failure:", pkg))
+  }
+}
+
+#Instalamos primero "foreach"
+install("foreach")
+
+#Seleccionamos los archivos que queremos instalar
+archive = c("rJava", "shiny", "rmarkdown", "foreach", "caret", "e1071", "rpart", "tree", "RWeka", "C50","rpart.plot")
+foreach(i = archive) %do% install(i)
+```
+
+```{r cache=TRUE}
+#descarga del archivo
+url <- "http://archive.ics.uci.edu/ml/machine-learning-databases/lenses/lenses.data"
+datos<-read.table(file=url(url), header= FALSE, sep = "", stringsAsFactors = T)
+```
+
+Datos del archivo
+```{r}
+datos
+```
+Proceso de transformación
+```{r}
+datos$V1=NULL
+
+names(datos) <- c("age","spectacle prescription","astigmatic","tear production rate","class")
+
+datos$age[datos$age==1] <-"young"
+datos$age[datos$age==2] <-"pre-presbyopic"
+datos$age[datos$age==3] <-"presbyopic"
+
+datos$`spectacle prescription`[datos$`spectacle prescription`==1] <-"myope"
+datos$`spectacle prescription`[datos$`spectacle prescription`==2] <-"hypermetrope"
+
+datos$astigmatic[datos$astigmatic==1] <-"no"
+datos$astigmatic[datos$astigmatic==2] <-"yes"
+
+datos$`tear production rate`[datos$`tear production rate`==1] <-"reduced"
+datos$`tear production rate`[datos$`tear production rate`==2] <-"normal"
+
+datos$class[datos$class==1] <- "hard"
+datos$class[datos$class==2] <- "soft"
+datos$class[datos$class==3] <- "none"
+
+```
+Datos nominales
+```{r}
+datos
+```
+Selección de datos de entrenamiento y datos de prueba
+```{r}
+entrenamiento <- datos[1:20,]
+prueba <- datos[21:24,]
+prueba
+```
+Construcción del árbol
+```{r}
+arbol_rpart <- rpart(class ~ ., 
+                     data=entrenamiento, 
+                     method = "class", control=rpart.control(minsplit=0) )
+rpart.plot(arbol_rpart)
+```
+metodo predict() y matriz de confusión
+```{r}
+prediccion <-predict(arbol_rpart, prueba[1:4,], type="class")
+
+confusionMatrix(prueba$class,prediccion)
+```
+
