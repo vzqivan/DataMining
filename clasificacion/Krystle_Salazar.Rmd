@@ -1,0 +1,54 @@
+---
+title: "Laboratorio 1"
+author: "Jean Marchena, Krystle Salazar, Daniel Silva"
+date: "18 de junio de 2015"
+output: pdf_document
+---
+
+```{r echo=F, warning=F, message=F, results='hide'}
+
+#Creamos la funcion que recibe los paquetes
+install = function(pkg){
+  #Si ya esta instalado, no lo instala.
+  if (!require(pkg, character.only = TRUE)) {
+    install.packages(pkg)
+    if (!require(pkg, character.only = TRUE)) stop(paste("load failure:", pkg))
+  }
+}
+
+#Instalamos primero "foreach"
+install("foreach")
+
+#Seleccionamos los archivos que queremos instalar
+archive = c("rJava", "shiny", "rmarkdown", "foreach", "caret", "e1071", "rpart", "tree", "RWeka", "C50", "rpart.plot")
+archive
+foreach(i = archive) %do% install(i)
+
+```
+
+```{r fig.width=30, fig.height=12}
+
+data1 = read.csv("http://archive.ics.uci.edu/ml/machine-learning-databases/car/car.data",
+                 sep=",",
+                 header=TRUE)
+names(data1) = c("buying","maint","doors","persons","lug_boot","safety","class")
+ds <- data1[,-c(3,5)]
+# Se quitaron los atributos 'doors' y 'lug_boot' ya que no nos parecen relevantes
+# para el análisis de compra de carros.
+random = createDataPartition(ds$buying, times=1, p=0.8, list=FALSE)
+training <- ds[random,]
+test <- ds[-random,]
+test <- test[,-c(5)]
+dt <- J48(training$class~., training,
+          control = Weka_control(R = TRUE))
+plot(dt)
+
+```
+
+```{r}
+r_part <- rpart(training$class~., training, method = "class")
+rpart.plot(r_part)
+#confusionMatrix(dt$predictions,training$class)
+confusionMatrix(predict(r_part, newData = test, type = "class"), training$class)
+
+```
