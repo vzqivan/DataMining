@@ -1,0 +1,136 @@
+---
+title: "Evaluacion_lab"
+author: "Ysidro Alba CI:20613436"
+date: "16 de junio de 2015"
+output: html_document
+---
+# Evaluacion Laboratorio Mineria
+
+2) Sección de descarga del dataset lenses
+
+```{r}
+library(rpart)
+library(rpart.plot)
+library(caret)
+library(RWeka)
+library(party)
+```
+
+```{r}
+data <- read.csv(
+  header = F,
+  sep = "",
+  file="https://archive.ics.uci.edu/ml/machine-learning-databases/lenses/lenses.data"
+)
+
+data$V1 <- NULL #Eliminar la primera columna
+colnames(data) <- c("age", "prescription", "astigmatic", "tear", "class")
+```
+
+3) Transformar los atributos numéricos del dataset a nominales de acuerdo a la sección
+
+Primero tengo estos vectores para tener los valores del dataframe como nominales
+
+```{r}
+age <- c("young","pre-presbyopic","presbyopic")
+prescription <- c("myope","hypermetrope")
+astigmatic <- c("no","yes")
+tear <- c("reduced","normal")
+class <- c("hard","soft","no")
+
+```
+
+```{r}
+for (i in 1:24 ) {
+  if (data$age[i]==1) data$age[i] = age[1]
+  if (data$age[i]==2) data$age[i] = age[2]
+  if (data$age[i]==3) data$age[i] = age[3]
+  if (data$prescription[i]==1) data$prescription[i] = prescription[1]
+  if (data$prescription[i]==2) data$prescription[i] = prescription[2]
+  if (data$astigmatic[i]==1) data$astigmatic[i] = astigmatic[1]
+  if (data$astigmatic[i]==2) data$astigmatic[i] = astigmatic[2]
+  if (data$tear[i]==1) data$tear[i] = tear[1]
+  if (data$tear[i]==2) data$tear[i] = tear[2]
+  if (data$class[i]==1) data$class[i] = class[1]
+  if (data$class[i]==2) data$class[i] = class[2]
+  if (data$class[i]==3) data$class[i] = class[3]
+}
+
+data$age<-as.factor(data$age)
+data$prescription<-as.factor(data$prescription)
+data$astigmatic<-as.factor(data$astigmatic)
+data$tear<-as.factor(data$tear)
+data$class<-as.factor(data$class)
+```
+
+Muestra Temporal de la data
+
+```{r}
+data
+```
+
+4) Al ser el dataset tan pequeño, usar 20 instancias como entrenamiento y 3 como prueba.
+
+La idea es que los conjuntos de datos sean similares y minimizar las diferencias en ellos cuando aplique metodos sobre ellos. Tambien comprender mejor el modelo.
+
+El criterio mio fue que al menos tengan lentes de contacto (class), la mayoria no tiene. Si importan aquellos sin lentes pero en teoria con usar lentes tendrian cierta mejoria
+
+
+```{r}
+training <- data[-c(2,6,12,20),]
+test <- data[c(2,6,12,20),]
+row.names(test) <- NULL
+row.names(training) <- NULL
+```
+
+5) Usar del paquete RWeka el algoritmo J48 y de rpart el método class para generar los árboles de
+decisión.
+
+```{r}
+modelo1 <- J48(formula = test$class~., data=test)
+modelo2 <- J48(formula = training$class~., data=training)
+```
+
+Modelos
+
+```{r}
+# Modelo 1, set de prueba
+plot(modelo1)
+
+# Modelo 2, set de entrenamiento
+plot(modelo2)
+```
+
+Arboles
+
+```{r}
+rpart1 <- rpart(formula=test$class~., data=test, method="class", control=rpart.control(minsplit = 3, cp = 0.01))
+
+rpart2 <- rpart(formula=training$class~., data=training, method="class", control=rpart.control(minsplit = 3, cp = 0.01))
+
+# Prueba
+rpart.plot(rpart1)
+
+#Entrenamiento
+rpart.plot(rpart2)
+```
+
+6) Use el método predict() para generar la predicción sobre las 4 instancias del set de prueba.
+
+```{r}
+predecir1 <- predict(modelo1, test, type="class")
+
+# Esta prediccion es solo para generar luego la matriz de confusion
+predecir2 <- predict(modelo2, test, type="class")
+```
+
+7) Genere la matriz de confusión para cada modelo
+
+```{r}
+Matriz1 <- confusionMatrix(predecir1, test$class)
+#Matriz2 <- confusionMatrix(predecir2, training$class)
+
+Matriz1
+
+#Matriz2
+```
