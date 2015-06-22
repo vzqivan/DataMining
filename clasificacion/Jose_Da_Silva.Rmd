@@ -1,0 +1,149 @@
+---
+title: "Laboratorio Arboles de Decisión"
+author: "Jose Da Silva"
+date: "16 de junio de 2015"
+output: html_document
+---
+
+```{r, echo = FALSE}
+install = function(pkg){
+  #Si ya está instalado, no lo instala.
+  if (!require(pkg, character.only = TRUE)) {
+    install.packages(pkg)
+    if (!require(pkg, character.only = TRUE)) stop(paste("load failure:", pkg))
+  }
+}
+```
+
+#### 1) Importe de Librerias e Inicialización
+
+```{r, echo = TRUE}
+install("foreach")
+
+archive = c("rJava", "shiny", "rmarkdown", "foreach", "caret", "e1071", "rpart", "tree", "RWeka", "C50")
+archive = c("rmarkdown")
+foreach(i = archive) %do% install(i)
+
+library(RWeka)
+library(rpart)
+library(rpart.plot)
+library(caret)
+```
+
+#### 2) Descarga del Dataset
+
+```{r}
+url="https://archive.ics.uci.edu/ml/machine-learning-databases/lenses/lenses.data"
+data.set = read.csv(file = url(url), sep="", header = F)
+```
+
+####3) Transformación de los datos a Nominales
+
+```{r}
+data.set = subset(x=data.set,select = c("V2","V3","V4","V5","V6"))
+names(data.set) = c("age", "prescription","astigmatic","tear","class")
+
+edad=ifelse(test = data.set$age == 1, yes="young", no=ifelse(test = data.set$age == 2, yes="pre-presbyopic", no="presbyopic"))
+data.set$age=factor(edad)
+
+prescripcion=ifelse(test = data.set$prescription == 1, yes="myope", no="hypermetrope")
+data.set$prescription=factor(prescripcion)
+
+astigmatismo=ifelse(test = data.set$astigmatic == 1, yes="no", no="yes")
+data.set$astigmatic=factor(astigmatismo)
+
+lagrimas=ifelse(test = data.set$tear == 1, yes="reduced", no="normal")
+data.set$tear=factor(lagrimas)
+
+clase=ifelse(test = data.set$class == 1, yes="hard", no=ifelse(test = data.set$class == 2, yes="soft", no="none"))
+data.set$class=factor(clase)
+```
+
+##### Dataset:
+
+```{r, echo = FALSE}
+data.set
+```
+
+#### 4) División de los datos para Test y Training (Random)
+
+```{r}
+index = 1:nrow(data.set)
+trainindex = sample(index,trunc(20))
+trainindex = sort(x=trainindex,decreasing = FALSE)
+trainset = data.set[trainindex ,]
+testset = data.set[-trainindex , ]
+```
+
+##### Trainset:
+
+```{r, echo = FALSE}
+trainset
+```
+
+##### Testset:
+
+```{r, echo = FALSE}
+testset
+```
+
+#### 5) Arboles de Decisión C4.5 (J48, RWeka) y rpart (rpart)
+##### 5.1) Genaracion:
+
+```{r}
+form = class ~ age + prescription + astigmatic + tear
+
+TreeJ48 = J48(formula = form,data = trainset)
+TreeRpart=rpart(formula = form, data = trainset,method = "class")
+```
+
+##### 5.2) Imprimir Árbol:
+
+```{r, fig.align='center'}
+plot(TreeJ48)
+rpart.plot(x = TreeRpart)
+```
+
+#### 6) Predict:
+
+```{r}
+TreeJ48_Predict = predict(object = TreeJ48, newdata = testset[1,])
+TreeJ48_Predict[2] = predict(object = TreeJ48, newdata = testset[2,])
+TreeJ48_Predict[3] = predict(object = TreeJ48, newdata = testset[3,])
+TreeJ48_Predict[4] = predict(object = TreeJ48, newdata = testset[4,])
+
+TreeRpart_Predict = factor(levels(data.set$class))[which.max(predict(object = TreeRpart, newdata = testset[1,]))]
+TreeRpart_Predict[2] = factor(levels(data.set$class))[which.max(predict(object = TreeRpart, newdata = testset[2,]))]
+TreeRpart_Predict[3] = factor(levels(data.set$class))[which.max(predict(object = TreeRpart, newdata = testset[3,]))]
+TreeRpart_Predict[4] = factor(levels(data.set$class))[which.max(predict(object = TreeRpart, newdata = testset[4,]))]
+```
+
+##### 6.1) Predicted With J48:
+
+```{r}
+TreeJ48_Predict
+```
+
+##### 6.2) Predicted With Rpart:
+
+```{r}
+TreeRpart_Predict
+```
+
+##### 6.3) Original:
+
+```{r}
+testset$class
+```
+
+#### 7) Confusion Matrix:
+##### 7.1) J48:
+
+```{r}
+confusionMatrix(data = TreeJ48_Predict, reference = testset$class)
+```
+
+##### 7.2) Rpart:
+```{r}
+confusionMatrix(data = TreeRpart_Predict, reference = testset$class)
+```
