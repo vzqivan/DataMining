@@ -1,16 +1,9 @@
 ---
 title: "Tarea 1"
-author: "Ivan Vazquez - Brayhan Villalba"
-date: "18 de junio de 2015"
-output: ioslides_presentation
-runtime: shiny
+author: "Ivan_Vazquez_Brayhan_Villalba"
+date: "June 22, 2015"
+output: html_document
 ---
-
-
-```{r}
-# Cambien el archivo, esto es una presentación de Shiny. Yo quiero un Rmd normal para generar el pdf.
-```
-
 
 ##Obtención de los datos
 -Dataset
