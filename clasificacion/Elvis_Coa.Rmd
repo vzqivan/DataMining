@@ -4,7 +4,10 @@ author: "Elvis"
 date: "16 de junio de 2015"
 output: html_document
 ---
+```{r}
+# que es esto?
 
+```
 This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
 En el siguiente documento se han omitido los acentos
