@@ -1,0 +1,50 @@
+---
+title: "laboratorio1"
+author: "Daniel Romero"
+date: "18 de junio de 2015"
+output: html_document
+---
+# Confirmamos que el usuario tiene todas las librerias necesarias para correr el Rmd
+```{r eval=FALSE}
+install = function(pkg){
+  if (!require(pkg, character.only = TRUE)) {
+    install.packages(pkg)
+    if (!require(pkg, character.only = TRUE)) stop(paste("load failure:", pkg))
+  }
+}
+
+install("foreach")
+
+archive = c("rJava", "shiny", "rmarkdown", "foreach", "caret", "e1071", "rpart","rpart.plot", "tree", "RWeka", "C50")
+foreach(i = archive) %do% install(i)
+```
+
+# Leemos la data
+```{r}
+library("RWeka")
+url = "http://archive.ics.uci.edu/ml/machine-learning-databases/car/car.data"
+data.set = read.csv(file = url,header = FALSE)
+```
+
+# Usé el criterio B, y no modifique el data set porque no conozco el contexto del problema y prefiero no perder ningun dato aunque este pueda no ser útil
+```{r}
+library("caret")
+MuestreoAleatorio = createDataPartition(data.set$V1, times=1, p=0.8, list=FALSE)
+training = data.set[MuestreoAleatorio,]
+test = data.set[-MuestreoAleatorio,]
+test = test[,-c(data.set$V7)]
+```
+
+```{r}
+arbolUno = J48(training$V7~., data=training)
+plot(arbolUno)
+library("rpart.plot")
+arbolDos = rpart(training$V7~., data=training, method="class")
+rpart.plot(arbolDos)
+```{r}
+
+```{r}
+confusionMatrix(arbolUno$predictions, training$V7 )
+confusionMatrix(predict(arbolDos, newData = test, type="class"), training$V7)
+```
+
