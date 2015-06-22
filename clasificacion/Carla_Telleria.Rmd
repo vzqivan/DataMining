@@ -1,0 +1,94 @@
+---
+title: "Laboratorio 1"
+author: "Carla Telleria"
+date: "18 de junio de 2015"
+output: pdf_document
+---
+
+```{r, echo=FALSE, results='hide'}
+
+#Creamos la funciÃ³n que recibe los paquetes
+install = function(pkg){
+  #Si ya estÃ¡ instalado, no lo instala.
+  if (!require(pkg, character.only = TRUE)) {
+    install.packages(pkg)
+    if (!require(pkg, character.only = TRUE)) stop(paste("load failure:", pkg))
+  }
+}
+
+#Instalamos primero "foreach"
+install("foreach")
+
+#Seleccionamos los archivos que queremos instalar
+archive = c("rJava", "shiny", "rmarkdown", "foreach", "caret", "e1071", "rpart", "tree", "RWeka", "C50", "rpart", "rpart.plot")
+foreach(i = archive) %do% install(i)
+
+```
+
+Luego de instalar o cargar los paquetes necesarios, se descargó el data set necesario para la realización del lab.
+
+```{r, echo=TRUE, eval=FALSE}
+data= read.csv("http://archive.ics.uci.edu/ml/machine-learning-databases/car/car.data", 
+               header = FALSE, sep = ",")
+```
+
+Se hizo un *summary* de los datos descargados y almacenados en *data*.
+
+```{r, echo=TRUE, eval=FALSE}
+summary(data)
+```
+
+Luego, se examinaron los datos para la correcta selección de atributos. Se utilizó la función *InfoGainAttributeEval* para conocer la importancia de los atributos al medir la ganancia respecto a la clase.
+
+```{r, echo=TRUE, eval=TRUE}
+InfoGainAttributeEval(formula = data$V7 ~ .,data)
+```
+
+Dado los resultados obtenidos y analizando los datos, se llegó a la conclusión de que la variable 3 que representa el número de puertas, es la que aporta menos información de todas y por lo tanto se decidió quitarla del set de datos.
+
+Después, se almacenó en un nuevo objeto llamado *datos* las variables que se decidieron dejar, y se convierte la nueva lista en un *data frame* para su posterior procesamiento.
+
+```{r, echo=TRUE, eval=TRUE}
+datos <- NULL
+datos$V1 <- data$V1
+datos$V2 <- data$V2
+datos$V3 <- data$V4
+datos$V4 <- data$V5
+datos$V5 <- data$V6
+datos$V6 <- data$V7
+datos <- data.frame(datos)
+```
+
+Se utilizó muestreo aleatorio con el 80% de los datos para entrenamiento y 20% para prueba.
+
+```{r, echo=TRUE, eval=TRUE}
+ind <- createDataPartition(datos$V6, p=.8, list = FALSE, times = 1)
+train <- NULL
+test <- NULL
+train <- datos[ind, ]
+test <- datos[-ind,]
+```
+
+Con el nuevo set de entrenamiento *train*, se generó el modelo y se imprimió el árbol.
+
+```{r, echo=TRUE, eval=TRUE, fig.width=4, fig.height=4}
+dt <- J48(formula=train$V6 ~ ., data=train)
+tree <- rpart(formula=train$V6 ~ ., data=train, method="class")
+rpart.plot(tree)
+```
+
+Luego, se utilizó el método *predict()* para generar la predicción sobre los modelos con el set de prueba *test* y después se generó la matriz de confusión, primero para el modelo creado con *J48*:
+
+```{r, echo=TRUE, eval=TRUE}
+pred <- predict(dt, type="class")
+model <- pred[1:length(test$V6)]
+confusionMatrix(model, test$V6)
+```
+
+Y por último para el modelo generado con *rpart*.
+
+```{r, echo=TRUE, eval=TRUE}
+pred <- predict(tree, type="class")
+model <- pred[1:length(test$V6)]
+confusionMatrix(model, test$V6)
+```
