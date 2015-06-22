@@ -1,0 +1,43 @@
+---
+title: "Laboratorio_1"
+author: "JeanAkchar"
+date: "18 de junio de 2015"
+output: pdf_document
+---
+```{r message=F}
+set.seed(5)
+data= read.csv("http://archive.ics.uci.edu/ml/machine-learning-databases/car/car.data"
+               , header=F, sep = ",")
+names(data)= c("buying", "maint", "doors", "persons", "lug_boot", "safety", "class")
+ds=data[,-c(3,5)]
+#Tome las variables buying, maint, persons y safety ya que mi enfoque fue 
+#hacia la venta de carros para familias
+library(caret)
+#Creo la particion con el 80%.
+random = createDataPartition(ds$buying, times=1, p=0.8, list=FALSE)
+#Utilizo el vector de indices que me devuelve la funcion createDataPartition,
+#hago que coincida con las posiciones que tengo en mi data ser 
+#(ds) para obtener el set #de datos training
+training = ds[random,]
+#Me quedo con todo lo que no fue seleccionado en el trainin
+#g y adicionalmente le #elimino la columna 5 (la clasificacion)
+test = ds[-random,]
+test = test[,-c(5)]
+
+library(RWeka)
+library(rpart)
+library(rpart.plot)
+#Creacion del arbol usando J48
+dt = J48(training$class~., data = training,  control = Weka_control(M = 12))
+plot(dt)
+
+
+#Gracicando el arbol con r_part
+r_part = rpart(training$class~., data = training, method = "class")
+rpart.plot(r_part)
+
+#Matriz de confusion
+confusionMatrix(dt$predictions,training$class)
+confusionMatrix(predict(r_part, newData = test, type = "class"), training$class)
+
+```
