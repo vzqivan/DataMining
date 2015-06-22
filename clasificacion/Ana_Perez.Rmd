@@ -62,11 +62,13 @@ Predecimos la data de la particion de Prueba
 
 ```{r}
 Prediccion <- predict(ModeloArbol, mydataText,type="class")
+Prediccion
 ```
 
 Por ultimo, generamos la matriz de confusion.
 
 ```{r}
 MC <- table(mydataText[, "safety"],Prediccion)
+MC
 ```
 
