@@ -1,0 +1,56 @@
+---
+title: "laboratorio"
+author: "gaby"
+date: "18 de junio de 2015"
+output: pdf_document
+---
+
+```{r eval=FALSE}
+#Creamos la funciÃ³n que recibe los paquetes
+install = function(pkg){
+  #Si ya estÃ¡ instalado, no lo instala.
+  if (!require(pkg, character.only = TRUE)) {
+    install.packages(pkg)
+    if (!require(pkg, character.only = TRUE)) stop(paste("load failure:", pkg))
+  }
+}
+
+#Instalamos primero "foreach"
+install("foreach")
+
+#Seleccionamos los archivos que queremos instalar
+archive = c("rJava", "shiny", "rmarkdown", "foreach", "caret", "e1071", "rpart", "tree", "RWeka", "C50")
+foreach(i = archive) %do% install(i)
+
+```
+
+
+```{r fig.width=50}
+library(RWeka)
+library(caret)
+
+url = "http://archive.ics.uci.edu/ml/machine-learning-databases/car/car.data"
+data.set = read.csv(file = url,header = FALSE)
+
+# 3 Opcion B no quite ninguna columna ya que no conozco el contexto del problema
+
+# 4 
+# Particion de 0.8
+random = createDataPartition(data.set$V6, times=1, p=0.8, list=FALSE)
+entrenamiento = data.set[random,]
+prueba = data.set[-random,]
+prueba = prueba[,-c(7)]
+
+arbol = J48(V7~.,entrenamiento, control = Weka_control(M = 1))
+plot(arbol)
+
+library(rpart)
+require(rpart.plot)
+arbol2 = rpart(entrenamiento$V7~.,data=entrenamiento,method = "class")
+rpart.plot(arbol2)
+
+confusionMatrix(arbol$predictions,entrenamiento$V7)
+confusionMatrix(predict(arbol2, newData = prueba, type = "class"), entrenamiento$V7)
+```
+
+
