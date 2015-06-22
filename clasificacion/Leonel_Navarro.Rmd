@@ -4,7 +4,10 @@ author: "Leonel Navarro"
 date: "18 de junio de 2015"
 output: html_document
 ---
-
+```{r}
+# Revisa el modelo de rpart
+# No tienes que hacer library cada vez que ejecutes una instruccion, con una basta.
+```
 
 
 ```{r}
