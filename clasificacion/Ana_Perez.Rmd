@@ -1,0 +1,71 @@
+---
+title: "Lab_1"
+author: "Ana Perez"
+date: "18 de junio de 2015"
+output: html_document
+---
+```{r}
+#Creamos la función que recibe los paquetes
+install = function(pkg){
+  #Si ya está instalado, no lo instala.
+  if (!require(pkg, character.only = TRUE)) {
+    install.packages(pkg)
+    if (!require(pkg, character.only = TRUE)) stop(paste("load failure:", pkg))
+  }
+}
+
+#Instalamos primero "foreach"
+install("foreach")
+
+#Seleccionamos los archivos que queremos instalar
+archive = c("rJava", "shiny", "rmarkdown", "foreach", "caret", "e1071", "rpart", "tree", "RWeka", "C50")
+foreach(i = archive) %do% install(i)
+```
+
+Inicialmente, descargamos la data a analizar.
+
+```{r}
+#Carga de la data
+url = "http://archive.ics.uci.edu/ml/machine-learning-databases/car/car.data"
+data = read.csv(url, header=F, sep = ",")
+
+names(data) = c("buying", "maint", "doors", "persons", "lug_boot", "safety", "class")
+```
+
+Una vez descaraga la data, procedemos a conservar solo las columnas que nos interesen. Usando un criterio particular, las columnas que mas nos interesan son "buying", "maint", "persons" y "safety". La columna "safety" es la mas importante ya que las personas cuando compran un carro quieren sentirse seguros en el mismo. Por ello, tambien podemos observar que particionando la data por la clase, si realizamos una iteracion de Information Gain, la columna con mayor ganancia es "safety".
+
+```{r}
+#Test de Information Gain
+InfoGainAttributeEval(class ~ . , data = data);
+
+#Seleccionamos las columnas de interes
+mydata <- data[-c(3,5,7)]
+```
+
+Ahora, particionamos la data en entrenamiento y prueba. Usamos un porcentaje de 80% para entrenamiento y un 20% para pruebas.
+
+```{r}
+trainIndex <- createDataPartition(mydata$safety, p = .8, list = FALSE, times = 2);
+mydataTrain <- mydata[ trainIndex,];
+mydataText <- mydata[-trainIndex,];
+```
+
+Aplicamos el algoritmo C4.5 de RWeka y generamos el arbol de decision
+
+```{r}
+treeModel <- C5.0(x = mydataTrain, y = mydataTrain$safety);
+ModeloArbol <- rpart(safety ~ ., data=mydataTrain, parms=list(split="information"));
+rpart.plot(ModeloArbol, type=0)
+```
+
+Predecimos la data de la particion de Prueba
+
+```{r}
+Prediccion <- predict(ModeloArbol, mydataText,type="class")
+```
+
+Por ultimo, generamos la matriz de confusion.
+
+```{r}
+MC <- table(mydataText[, "safety"],Prediccion);
+```
