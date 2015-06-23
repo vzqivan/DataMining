@@ -1,0 +1,96 @@
+---
+title: "Laboratorio Árboles de Decisión"
+author: "Sarah Dresden"
+date: "22 de junio de 2015"
+output: html_document
+---
+
+
+
+```{r}
+
+```
+
+
+## DATA SET
+
+
+```{r, echo=FALSE}
+
+
+url="https://archive.ics.uci.edu/ml/machine-learning-databases/lenses/lenses.data"
+data.set=read.csv(file=url(url),sep="",header=F)
+data.set=subset(x=data.set,select=c("V2","V3","V4","V5","V6"))
+
+names(data.set)=c("age","prescription","astigmatic","tears","class")
+data.set$age <- factor(data.set$age,labels=c("young",  "pre-presbyopic", "presbyopic"))
+data.set$prescription <- factor(data.set$prescription,labels=c("myope",  "hypermetrope"))
+data.set$astigmatic <- factor(data.set$astigmatic,labels=c("no",  "yes"))
+data.set$tears <- factor(data.set$tears,labels=c("reduced",  "normal"))
+data.set$class <- factor(data.set$class,labels=c("hard contact lense",  "soft contact lenses", "not contact lenses"))                             
+
+
+View(data.set)
+```
+```{r, results='asis',echo=FALSE}
+knitr::kable(data.set)
+```
+
+## Árbol de decisión ID3
+
+
+### Entrenamiento
+```{r, echo=FALSE}
+
+test<-c(1,2,3,4)
+training<-data.set[-test,]
+test<-data.set[test,]
+
+
+library(RWeka)
+tr<-J48(formula=training$class~. , data=training)
+ plot(tr)
+```
+
+### Prueba
+
+```{r, echo=FALSE}
+
+ tt<-J48(formula=test$class~. , data=test)
+plot(tt)
+ 
+```
+
+##Árbol de decisión rpart
+
+
+### Entrenamiento
+
+```{r, echo=FALSE}
+library(rpart)
+treetr <- rpart(training$class ~., data = training, method = "class")
+plotcp(treetr)
+
+```
+
+### Prueba
+
+```{r, echo=FALSE}
+treett <- rpart(test$class ~., data = test, method = "class")
+plotcp(treett)
+
+```
+
+## Predicción sobre las 4 instancias del set de prueba
+
+```{r, echo=FALSE}
+x<-predict(treett,test,type="vector")
+print(x)
+```
+
+## Matriz de Confusión
+
+```{r, echo=FALSE}
+y<-summary(tt)
+print(y)
+```
