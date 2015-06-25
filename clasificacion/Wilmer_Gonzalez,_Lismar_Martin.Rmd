@@ -5,7 +5,32 @@ date: "19 de junio de 2015"
 output: pdf_document
 ---
 
-# Tarea 1
+## Presentación del problema
+Se quiere predecir la clase de un vehiculo de acuerdo a las variables contenidas en el siguiente [repositorio](http://archive.ics.uci.edu/ml/datasets/Car+Evaluation) utilizando Árboles de Decisión tomando en consideración las siguientes clases:
+
+## Clases
+
+Class          | N            |N[%]            |
+---------------|:------------:|:--------------:|
+   unacc       |   1210       |70.023       | 
+   acc         |   384        |22.222       |
+   good        |    69        | 3.993       | 
+   v-good      |  65          | 3.762       | 
+   
+Que agrupan las instancias del set de datos.
+
+Se hace uso de los arboles de decisión generados por las funciones J48 y rpart.
+
+## Descripción de las variables
+
+Nombre         | Tipo de Dato | Datos ausentes |Rango                  | Descripción |
+---------------|:------------:|:--------------:|:---------------------:|:-----------:|
+buying         | Nominal      | No tiene       | vhigh, high, med, log | buying price|
+maint          | Nominal      | No tiene       | vhigh, high, med, log | price of the maintenance|
+doors          | Nominal      | No tiene       | 2, 3, 4, 5more        | number of doors|
+persons        | Nominal      | No tiene       | 2, 4, more            | capacity in terms of persons to carry|
+lug_boot       | Nominal      | No tiene       | small, med, big       | the size of luggage boot|
+safety         | Nominal      | No tiene       | low, med, high        | estimated safety of the car|
 
 ## Carga de las librerias necesarias
 
@@ -14,6 +39,7 @@ En el siguiente script se cargan las librerias necesarias para ejecutar el codig
 ```{r echo=T,message=FALSE}
 require(devtools)
 source_url("https://raw.githubusercontent.com/belgrades/DataMining/master/install.R")
+install("rpart.plot")
 ```
 
 ```{r eval=F, ,echo=T}
@@ -75,9 +101,11 @@ Tomando esto en cuenta, decidimos considerar las variables:
 * persons
 * lug_boot
 
-Ya que cada una de estas variables caracteriza la pertenencia a alguna clase
+Ya que cada una de estas variables caracteriza la pertenencia a alguna clase.
+
 ## Muestreo mediante validación cruzada
 Para implementar esta técnica, iteramos el metodo de createDataPartition segun la forma k-folds donde cada uno tiene proporción 80(entrenamient)/20(prueba)
+
 No se imprimirán los plots de la validacion cruzada para no extender la longitud del documento.por defecto se asume el k = 2
 
 
@@ -105,7 +133,6 @@ k <- 2
 ## Muestreo aleatorio
 
 ```{r}
-library("RWeka")
 indexTraining <- createDataPartition(y = raw_data$class,p = .80,list = FALSE)
 nrow(raw_data[indexTraining,])
 nrow(raw_data[-indexTraining,])
@@ -122,12 +149,54 @@ confusionMatrix(arbol1$predictions,test$class)
 ```
 
 ## Aplicación del metodo de clasificación desde rpart
+
+### Con variacion de parámetros
+
+Acá obtuvimos diferentes escenarios al modificar los parametros de la función rpart(control)
 ```{r}
 arbol2 <- rpart(class ~., training,method = "class")
-#install.packages(rpart.plot)
-library(rpart.plot)
-rpart.plot(arbol2)
-arbol2 <- rpart(class ~., training,method = "class")
-confusionMatrix(predict(arbol2, newData = test, type = "class"), training$class)
+minsplits <- c(2,5,10,50,300,1000)
+cps <- c(0.3,0.2,0.1,0.0001,0.0000000000001)
+minbuckets <- c(2,5,10,50,300)
+arbol2_min2_acc <- list()
+for (i in minsplits){
+  for(j in cps){
+    for(k in minbuckets){
+      arbol2_min2 <- rpart(class ~., training,method = "class",control = rpart.control(minsplit = i,cp = j, minbucket = k))
+      arbol2_min2_conf <- confusionMatrix(predict(arbol2_min2, newData = test, type = "class"), training$class)
+      paste("minsplit =",i,",cp =",j,",minbuckets =",k,",accuracy= ",arbol2_min2_conf$overall[1],sep = " ")
+      rpart.plot(arbol2_min2)
+      arbol2_min2_conf
+      arbol2_min2_acc <- rbind(c(arbol2_min2_acc,i,j,k,arbol2_min2_conf$overall[1]))
+    }
+  }
+}
+arbol2_min2_acc <- matrix(arbol2_min2_acc,ncol = 4,byrow = T)
+nms <-c("minsplits","cp","minbuckets","accuracy")
+colnames(arbol2_min2_acc) <- nms
+arbol2_min2_acc <- as.data.frame(arbol2_min2_acc)
+print(arbol2_min2_acc)
+## aca escenarios con mejor precision
+arbol2_min2_acc[arbol2_min2_acc$accuracy> 0.97,]
+
+## aca escenarios con peor precision
+arbol2_min2_acc[arbol2_min2_acc$accuracy< 0.70,]
 ```
 
+De lo anterior encontramos que:
+* Mayor precisión -> minsplit= 2, cp = 1e-13, minbuckets = 2,  accuracy = 0.9891618.
+  NOTA: A este valor se aproximan escenarios con caracteristicas como: minsplit in (2,5,10), minbuckets in (2,5), cp in (0.00001,0.00000000000001).
+  De donde notamos que influye en mayor medida la seleccion del minsplit.
+  
+* Menor precisión -> minsplit= 2, cp = 0.3 , minbuckets = 2, accuracy = 0.699422. 
+  NOTA: Sin embargo esta ultima instancia refleja el comportamiento de varias, en donde, el cp == 0.2 ó cp == 0.3 con cualquier otra combinación de variables, al igual que para todas las instacias con minsplit = 1000. Podemos deducir entonces que el crecimiento del minsplit alcance un punto donde el resto de los parametros se ven anuladas por la cantidad de instancias(del estudio) que son permitidas por nodo
+
+### Parámetros por defecto
+Acá a pesar que no modificamos los parametros para rpart, el accuracy resulto ser considerablemente alto(0.9422)
+donde minsplit = 20, minbucket = 20/3 , cp = 0.1
+```{r}
+rpart.plot(arbol2)
+arbol2 <- rpart(class ~., training, method = "class")
+confusionMatrix(predict(arbol2, newData = test, type = "class"), training$class)
+print(arbol2_min2_acc)
+```
