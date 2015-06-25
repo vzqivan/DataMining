@@ -1,14 +1,29 @@
 ---
-title: "laboratorio"
+title: "lab"
 author: "gaby"
-date: "18 de junio de 2015"
+date: "25 de junio de 2015"
 output: pdf_document
 ---
 
+#Resumen del dominio del problema:
+El problema esta enfocado en la venta de carros 
+
+#Tabla resumen de las Variables 
+Repositorio: [Data set](http://archive.ics.uci.edu/ml/machine-learning-databases/car/car.data)
+
+NOMBRE  | TIPO     | DATOS AUSENTES | RANGO                  | EXPLICACIÓN                           |
+:----:  | :------: | :------------: | :--------------------: | :-----------------------------------: |
+Buying  | Nominal  | No tiene       | v-high, high, med, low | buying price                          |
+Maint   | Nominal  | No tiene       | v-high, high, med, low | price of the maintenance              |
+Doors   | Nominal  | No tiene       | 2, 3, 4, 5-more        | number of doors                       |
+Persons | Nominal  | No tiene       | 2, 4, more             | capacity in terms of persons to carry |
+Lug_boot| Nominal  | No tiene       | small, med, big        | the size of luggage boot              |
+Safety  | Nominal  | No tiene       | low, med, high         | estimated safety of the car           |
+
 ```{r eval=FALSE}
-#Creamos la funciÃ³n que recibe los paquetes
+#Creamos la funcion que recibe los paquetes
 install = function(pkg){
-  #Si ya estÃ¡ instalado, no lo instala.
+  #Si ya esta instalado, no lo instala.
   if (!require(pkg, character.only = TRUE)) {
     install.packages(pkg)
     if (!require(pkg, character.only = TRUE)) stop(paste("load failure:", pkg))
@@ -44,13 +59,65 @@ prueba = prueba[,-c(7)]
 arbol = J48(V7~.,entrenamiento, control = Weka_control(M = 1))
 plot(arbol)
 
+#Matriz de confusion 
+confusionMatrix(arbol$predictions,entrenamiento$V7)
+
+#Graficar arboles con rpart
+
 library(rpart)
 require(rpart.plot)
+
 arbol2 = rpart(entrenamiento$V7~.,data=entrenamiento,method = "class")
 rpart.plot(arbol2)
-
-confusionMatrix(arbol$predictions,entrenamiento$V7)
+#Matriz de confusion 
+matriz=confusionMatrix(predict(arbol2, newData = prueba, type = "class"), entrenamiento$V7)
 confusionMatrix(predict(arbol2, newData = prueba, type = "class"), entrenamiento$V7)
+``` 
+
+#1
+```{r}
+arbol2.1 = rpart(entrenamiento$V7~.,data=entrenamiento,method = "class",control=rpart.control(minsplit=5,cp=0.01))
+rpart.plot(arbol2.1)
+#Matriz de confusion 
+matriz1=confusionMatrix(predict(arbol2.1, newData = prueba, type = "class"), entrenamiento$V7)
+confusionMatrix(predict(arbol2.1, newData = prueba, type = "class"), entrenamiento$V7)
+
+``` 
+
+#2 
+```{r}
+arbol2.2 = rpart(entrenamiento$V7~.,data=entrenamiento,method = "class",control=rpart.control(minsplit=50,cp=0.01))
+rpart.plot(arbol2.2)
+#Matriz de confusion 
+matriz2=confusionMatrix(predict(arbol2.2, newData = prueba, type = "class"), entrenamiento$V7)
+confusionMatrix(predict(arbol2.2, newData = prueba, type = "class"), entrenamiento$V7)
+``` 
+
+#3 
+```{r}
+arbol2.3 = rpart(entrenamiento$V7~.,data=entrenamiento,method = "class",control=rpart.control(minsplit=200,cp=0.01))
+rpart.plot(arbol2.3)
+#Matriz de confusion 
+matriz3=confusionMatrix(predict(arbol2.3, newData = prueba, type = "class"), entrenamiento$V7)
+confusionMatrix(predict(arbol2.3, newData = prueba, type = "class"), entrenamiento$V7)
+``` 
+
+#4
+```{r}
+arbol2.4 = rpart(entrenamiento$V7~.,data=entrenamiento,method = "class",control=rpart.control(minsplit=600,cp=0.01))
+rpart.plot(arbol2.4)
+#Matriz de confusion 
+matriz4=confusionMatrix(predict(arbol2.4, newData = prueba, type = "class"), entrenamiento$V7)
+confusionMatrix(predict(arbol2.4, newData = prueba, type = "class"), entrenamiento$V7)
+``` 
+
+#Accuracy de cada uno
+```{r}
+ms = c(20,5,30,90,150)
+tab = c(matriz$overall[1],matriz1$overall[1],matriz2$overall[1],matriz3$overall[1],matriz4$overall[1])
+names(tab) = ms
+tab
 ```
 
-
+# Analisis
+Con esto podemos notar que los menores minsplit dan mejor accuracy tomando en cuenta el mismo cp para este ejemplo
