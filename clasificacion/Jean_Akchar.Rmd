@@ -1,43 +1,113 @@
 ---
-title: "Laboratorio_1"
-author: "JeanAkchar"
+title: "Laboratorio 1"
+author: "Jean Akchar"
 date: "18 de junio de 2015"
-output: pdf_document
+output: html_document
 ---
+
+
+El problema va a enfocado a la venta de vehiculos.
+Variables del data set.
+Link del [DataSet](http://archive.ics.uci.edu/ml/machine-learning-databases/car/car.data)
+
+Nombre | Tipo | Datos ausentes | Rango | Explicación |
+:-----:|:----:|:--------------:|:-----:|:-----------:|
+Buying | Nominal     |      NA          |v-high, high, med, low    | Precio de compra del carro   |
+Maint  | Nominal     |      NA        |v-high, high, med, low   | Precio de mantenimiento del carro    |
+Doors  | Nominal     |      NA          |2, 3, 4, 5-more       |  Numero de puertas   |
+Persons|  Nominal    |      NA           |2, 4, more       |  Cantidad de personas que pueden ir en el carro   |
+Lug_boot| Nominal    |      NA           |small, med, big       | Tamaño de la maleta del carro    |
+Safety |  Nominal    |      NA           |low, med, high       |Seguridad del carro     |
+Clase  | Nominal     |      NA           | unacc, acc, good, v-good | Clases con las cuales se pretende clasificar|
+
+
 ```{r message=F}
+library(RWeka)
+library(rpart)
+library(rpart.plot)
+library(caret)
 set.seed(5)
 data= read.csv("http://archive.ics.uci.edu/ml/machine-learning-databases/car/car.data"
                , header=F, sep = ",")
 names(data)= c("buying", "maint", "doors", "persons", "lug_boot", "safety", "class")
 ds=data[,-c(3,5)]
-#Tome las variables buying, maint, persons y safety ya que mi enfoque fue 
-#hacia la venta de carros para familias
-library(caret)
-#Creo la particion con el 80%.
-random = createDataPartition(ds$buying, times=1, p=0.8, list=FALSE)
-#Utilizo el vector de indices que me devuelve la funcion createDataPartition,
-#hago que coincida con las posiciones que tengo en mi data ser 
-#(ds) para obtener el set #de datos training
-training = ds[random,]
-#Me quedo con todo lo que no fue seleccionado en el trainin
-#g y adicionalmente le #elimino la columna 5 (la clasificacion)
-test = ds[-random,]
-test = test[,-c(5)]
-
-library(RWeka)
-library(rpart)
-library(rpart.plot)
-#Creacion del arbol usando J48
-dt = J48(training$class~., data = training,  control = Weka_control(M = 12))
-plot(dt)
-
-
-#Gracicando el arbol con r_part
-r_part = rpart(training$class~., data = training, method = "class")
-rpart.plot(r_part)
-
-#Matriz de confusion
-confusionMatrix(dt$predictions,training$class)
-confusionMatrix(predict(r_part, newData = test, type = "class"), training$class)
 
 ```
+Tome las variables buying, maint, persons y safety ya que mi enfoque fue hacia la venta de carros para familias.
+
+Creo la particion con el 80%.
+
+```{r message=F}
+random = createDataPartition(ds$buying, times=1, p=0.8, list=FALSE)
+```
+Utilizo el vector de indices que me devuelve la funcion createDataPartition, hago que coincida con las posiciones que tengo en mi data set (ds) para obtener el set de datos training
+
+```{r message=F}
+training = ds[random,]
+```
+
+Me quedo con todo lo que no fue seleccionado en el training y adicionalmente le elimino la columna 5 (la clasificacion).
+
+```{r message=F}
+test = ds[-random,]
+test = test[,-c(5)]
+```
+
+Creacion del arbol usando J48.
+
+```{r message=F}
+dt = J48(training$class~., data = training,  control = Weka_control(M = 12))
+plot(dt)
+```
+
+Gracicando el arbol con r_part con minsplit 2 y cp 0.0001 (ganacia).
+
+```{r message=F}
+r_part = rpart(training$class~., data = training, method = "class", control=rpart.control(minsplit = 2, cp=0.0001))
+rpart.plot(r_part)
+mc1 <- confusionMatrix(predict(r_part, newData = test, type = "class"), training$class)
+mc1
+```
+
+Gracicando el arbol con r_part con minsplit 200 y cp 0.0001 (ganacia).
+
+```{r message=F}
+r_part2 = rpart(training$class~., data = training, method = "class", control=rpart.control(minsplit = 200, cp=0.0001))
+rpart.plot(r_part2)
+mc2 <- confusionMatrix(predict(r_part2, newData = test, type = "class"), training$class)
+mc2
+```
+
+Gracicando el arbol con r_part con minsplit 500 y cp 0.0001 (ganacia).
+
+```{r message=F}
+r_part3 = rpart(training$class~., data = training, method = "class", control=rpart.control(minsplit = 500, cp=0.0001))
+rpart.plot(r_part3)
+mc3 <- confusionMatrix(predict(r_part3, newData = test, type = "class"), training$class)
+mc3
+```
+
+Gracicando el arbol con r_part con minsplit 777 y cp 0.0001 (ganacia).
+
+```{r message=F}
+r_part4 = rpart(training$class~., data = training, method = "class", control=rpart.control(minsplit = 777, cp=0.0001))
+rpart.plot(r_part4)
+mc4 <- confusionMatrix(predict(r_part4, newData = test, type = "class"), training$class)
+mc4
+
+```
+
+
+Resultados obtenidos en cada uno de los escenarios (arboles de decision con rpart):
+
+Escenario_1 | Escenario_2 | Escenario_3 | Escenario_4 |
+:---------: | :---------: | :---------: | :---------: |
+0.8981     | 0.8403       | 0.7789      | 0.7717      |
+
+
+```{r message=F}
+#Matriz de confusion para el arbol generaqdo con el J48
+confusionMatrix(dt$predictions,training$class)
+```
+
+Comparando las matrices de confusión obtenidas con el J48 y el rpart, podemos concluir que la mejor aproximación es la del rpart con minsplit 2 y cp 0.0001, ya que genera un arbol no muy complejo con una error bajo. 
