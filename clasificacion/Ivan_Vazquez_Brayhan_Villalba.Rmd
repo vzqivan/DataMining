@@ -1,16 +1,21 @@
 ---
 title: "Tarea 1"
-author: "Ivan Vazquez - Brayhan Villalba"
-date: "18 de junio de 2015"
-output: ioslides_presentation
-runtime: shiny
+author: "Ivan_Vazquez_Brayhan_Villalba"
+date: "June 22, 2015"
+output: html_document
 ---
 
+El objetivo de este informe es clasificar qué tan aceptable es cierto carro estableciendo una relación entre su precio total y sus comodidades, entre ellas la seguridad que ofrece. Para esto utilizamos un modelo obtenido de evaluar las instancias del [repositorio](http://archive.ics.uci.edu/ml/machine-learning-databases/car/car.data) de un DataSet. El cual contiene las siguientes variables:
 
-```{r}
-# Cambien el archivo, esto es una presentación de Shiny. Yo quiero un Rmd normal para generar el pdf.
-```
-
+Variable    |   Tipo    |   D.A   |     Rango             | Explicaci?n                           |
+----------- |:---------:|:-------:|:---------------------:|:-------------------------------------:|
+buying      | Nominal   |   No    |v-high, high, med, low | El precio total de compra             |
+maint       | Nominal   |   No    |v-high, high, med, low | Precio de mantenimiento               |
+doors       | Nominal   |   No    |    2, 3, 4, 5-more    | Número de puertas                     |
+persons     | Nominal   |   No    |     2, 4, more        | Capacidad en personas que puede llevar|
+lug_boot    | Nominal   |   No    |  small, med, big      | Tamaño de la maleta                   |
+safety      | Nominal   |   No    | low, med, high        | Seguridad estimada                    |
+class       | Nominal   |   No    |unacc, acc, good, vgood| Aceptabilidad del carro en cuestión   |
 
 ##Obtención de los datos
 -Dataset
@@ -70,11 +75,28 @@ confusionMatrix(predict(arbol,pruebaf,type="class"), prueba$class)
 
 ## Modelo Rpart
 ```{r echo=FALSE}
-fit <- rpart(class ~ .,rd, method="class")
-rpart.plot(fit)
+fit1 <- rpart(class ~ .,rd, control=rpart.control(minsplit=2,cp=0.01), method="class")
+fit2 <- rpart(class ~ .,rd, control=rpart.control(minsplit=140,cp=0.1), method="class")
+fit3 <- rpart(class ~ .,rd, control=rpart.control(minsplit=550,cp=0.01), method="class")
+fit4 <- rpart(class ~ .,rd, control=rpart.control(minsplit=1152,cp=0.01), method="class")
+
+rpart.plot(fit1)
 ```
 
 ## Rpart: Predicción y Matriz de Confusión
 ```{r echo=FALSE}
-confusionMatrix(predict(fit,pruebaf,type="class"), prueba$class)
+c1 = confusionMatrix(predict(fit1,pruebaf,type="class"), prueba$class)
+c2 =  confusionMatrix(predict(fit2,pruebaf,type="class"), prueba$class)
+c3 = confusionMatrix(predict(fit3,pruebaf,type="class"), prueba$class)
+c4 = confusionMatrix(predict(fit4,pruebaf,type="class"), prueba$class)
 ```
+
+
+Escenario |     Accuracy    |
+--------- |:---------------:|
+1         |`r c1$overall[1]`|
+2         |`r c2$overall[1]`|
+3         |`r c3$overall[1]`|
+4         |`r c4$overall[1]`|
+
+
