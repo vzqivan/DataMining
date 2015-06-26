@@ -104,24 +104,20 @@ Tomando esto en cuenta, decidimos considerar las variables:
 Ya que cada una de estas variables caracteriza la pertenencia a alguna clase.
 
 ## Muestreo mediante validación cruzada
-Para implementar esta técnica, iteramos el metodo de createDataPartition segun la forma k-folds donde cada uno tiene proporción 80(entrenamient)/20(prueba)
-
-No se imprimirán los plots de la validacion cruzada para no extender la longitud del documento.por defecto se asume el k = 2
-
+Para implementar esta técnica, iteramos 5 veces (que es el numero total de veces que puede ser diferente la particion que tome) seleccionando el
+k = 5 dado que 100%(de la data) / 5 = 20%(de la data) por defecto esta eval= F
 
 ```{r eval=F}
-k <- 2
-  for(i in 1:k){
-    indexTraining <- createDataPartition(y = raw_data$class,p = .80,list = FALSE)
-    training <- raw_data[indexTraining,]
-    test <- raw_data[-indexTraining,]
+partitions <- createFolds(y = raw_data$class,k = 5,list = T,returnTrain = F)
+for(i in attributes(partitions)){
+    training <- raw_data[-partitions$i,]
+    test <- raw_data[partitions$i,]
     cat("Model J48 iteración: ",i)
     arbol1 = J48(class~. , test,control = Weka_control(C=0.25 , M = 3))
     plot(arbol1)
     confusionMatrix(arbol1$predictions,test$class)
     cat("Model rpart iteración: ",i)
     arbol2 <- rpart(class ~., training,method = "class")
-    #install.packages(rpart.plot)
     library(rpart.plot)
     rpart.plot(arbol2)
     arbol2 <- rpart(class ~., training,method = "class")
