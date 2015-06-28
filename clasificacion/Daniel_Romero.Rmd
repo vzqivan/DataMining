@@ -4,6 +4,20 @@ author: "Daniel Romero"
 date: "18 de junio de 2015"
 output: html_document
 ---
+
+# Resumen: El problema se basa en la venta de carros 
+
+NOMBRE  | TIPO     | DATOS AUSENTES | RANGO                  | EXPLICACIÓN                           |
+:----:  | :------: | :------------: | :--------------------: | :-----------------------------------: |
+Buying  | Nominal  | No tiene       | v-high, high, med, low | Precio de Compra                      |
+Maint   | Nominal  | No tiene       | v-high, high, med, low | Precio de mantenimiento               |
+Doors   | Nominal  | No tiene       | 2, 3, 4, 5-more        | Numero de puertas                     |
+Persons | Nominal  | No tiene       | 2, 4, more             | Capacidad de personas                 |
+Lug_boot| Nominal  | No tiene       | small, med, big        | Tamaño de la maleta                   |
+safety  | Nominal  | No tiene       | low, med, high         | Seguridad estimada del carro          |
+
+        
+
 # Confirmamos que el usuario tiene todas las librerias necesarias para correr el Rmd
 ```{r eval=FALSE}
 install = function(pkg){
@@ -26,7 +40,7 @@ url = "http://archive.ics.uci.edu/ml/machine-learning-databases/car/car.data"
 data.set = read.csv(file = url,header = FALSE)
 ```
 
-# UsÃ© el criterio B, y no modifique el data set porque no conozco el contexto del problema y prefiero no perder ningun dato aunque este pueda no ser Ãºtil
+# Use el criterio B, y no modifique el data set porque no conozco el contexto del problema y prefiero no perder ningun dato aunque este pueda no ser util
 ```{r}
 library("caret")
 MuestreoAleatorio = createDataPartition(data.set$V1, times=1, p=0.8, list=FALSE)
@@ -36,15 +50,68 @@ test = test[,-c(data.set$V7)]
 ```
 
 ```{r}
-arbolUno = J48(training$V7~., data=training)
+arbolUno = J48(training$V7~., data=training, control = Weka_control(M = 1))
 plot(arbolUno)
-library("rpart.plot")
-arbolDos = rpart(training$V7~., data=training, method="class")
-rpart.plot(arbolDos)
+confusionMatrix(arbolUno$predictions, training$V7 )
 ```
 
+# 1
 ```{r}
-confusionMatrix(arbolUno$predictions, training$V7 )
-confusionMatrix(predict(arbolDos, newData = test, type="class"), training$V7)
+library("rpart.plot")
+arbolDos = rpart(training$V7~., data=training, method="class", control = rpart.control(minsplit=2, cp=0.0001))
+rpart.plot(arbolDos)
+a1 = confusionMatrix(predict(arbolDos, newData = test, type="class"), training$V7)
+a1
+```
+
+# 2
+```{r}
+library("rpart.plot")
+arbolTres = rpart(training$V7~., data=training, method="class", control = rpart.control(minsplit=20, cp=0.001))
+rpart.plot(arbolTres)
+a2 = confusionMatrix(predict(arbolTres, newData = test, type="class"), training$V7)
+a2
+```
+
+# 3
+```{r}
+library("rpart.plot")
+arbolCuatro = rpart(training$V7~., data=training, method="class", control = rpart.control(minsplit=80, cp=0.01))
+rpart.plot(arbolCuatro)
+a3 = confusionMatrix(predict(arbolCuatro, newData = test, type="class"), training$V7)
+a3
+```
+
+# 4
+```{r}
+library("rpart.plot")
+arbolCinco = rpart(training$V7~., data=training, method="class", control = rpart.control(minsplit=320, cp=0.1))
+rpart.plot(arbolCinco)
+a4 = confusionMatrix(predict(arbolCinco, newData = test, type="class"), training$V7)
+a4
+```
+
+
+# Comparemos la precision entre los arboles generados 
+```{r}
+accs = c(a1$overall['Accuracy'],a2$overall['Accuracy'],a3$overall['Accuracy'],a4$overall['Accuracy'])
+accs
+```
+
+
+#Analisis
+Según la tabla anterior podemos notar que mientras menor sea el cp y el minsplit el arbol será mas grande porque este es mas permisivo para generar hojas.
+
+Mientras mayor sea el cp, la condicion para generar estados es mas estricta y el arbol será mas pequeño.
+
+Si ahora comparamos nuestro ultimo arbol minsplit=320 y cp=0.1, con la prueba de Fernando minsplit=2 y cp=0.1 podemos notar que lo que mayor afecta a la hora de generar el arbol es el cp y tiene sentido, porque aunque se cumple el minsplit si la ganancia producida no es la requerida simplemente no se crea el estado.
+
+
+# Prueba de Fernando 
+```{r}
+library("rpart.plot")
+arbolCinco = rpart(training$V7~., data=training, method="class", control = rpart.control(minsplit=2, cp=0.1))
+rpart.plot(arbolCinco)
+confusionMatrix(predict(arbolCinco, newData = test, type="class"), training$V7)
 ```
 
