@@ -7,7 +7,7 @@ output: html_document
 
 El objetivo de este informe es clasificar qué tan aceptable es cierto carro estableciendo una relación entre su precio total y sus comodidades, entre ellas la seguridad que ofrece. Para esto utilizamos un modelo obtenido de evaluar las instancias del [repositorio](http://archive.ics.uci.edu/ml/machine-learning-databases/car/car.data) de un DataSet. El cual contiene las siguientes variables:
 
-Variable    |   Tipo    |   D.A   |     Rango             | Explicaci?n                           |
+Variable    |   Tipo    |   D.A   |     Rango             | Explicación                           |
 ----------- |:---------:|:-------:|:---------------------:|:-------------------------------------:|
 buying      | Nominal   |   No    |v-high, high, med, low | El precio total de compra             |
 maint       | Nominal   |   No    |v-high, high, med, low | Precio de mantenimiento               |
@@ -18,12 +18,13 @@ safety      | Nominal   |   No    | low, med, high        | Seguridad estimada  
 class       | Nominal   |   No    |unacc, acc, good, vgood| Aceptabilidad del carro en cuestión   |
 
 ##Obtención de los datos
--Dataset
+Almacenamos en ´data´ el contenido de la URL
 ```{r echo=TRUE, cache =TRUE }
 data <- read.csv(url("http://archive.ics.uci.edu/ml/machine-learning-databases/car/car.data"), header = FALSE, col.names=c("buying","maint", "doors", "persons", "lug_boot", "safety","class"))
 ```
 
-##Preprocesamiento
+#Libraries
+-Instalamos librerias necesarias
 ```{r echo=FALSE}
 message("Se instalan paquetes")
 install = function(pkg){
@@ -38,7 +39,13 @@ install("foreach")
 
 archive = c("rJava", "shiny", "rpart.plot", "rmarkdown", "foreach", "caret", "e1071", "rpart", "tree", "RWeka", "C50")
 foreach(i = archive) %do% install(i)
+``` 
 
+##Preprocesamiento
+-Aplicamos un criterio de selección de variables (Attribute Selection) desde Weka
+-Evaluator: InfoGainAttributeEval
+-Search: Ranker con N=4 (Selecciona las 4 columnas mas importantes)
+```{r echo=FALSE}
 data$buying <- as.factor(data$buying)
 data$maint <- as.factor(data$maint)
 data$doors <- as.factor(data$doors)
@@ -74,6 +81,9 @@ confusionMatrix(predict(arbol,pruebaf,type="class"), prueba$class)
 ```
 
 ## Modelo Rpart
+Generamos 4 escenarios distintos de Rpart con diferentes ´minsplit´ y ´cp´
+-Minsplit define el valor crítico que determinará si se particiona o no un nodo en cuestión. Ej: si un nodo tiene (>= valor) instancias se procede a hacer el split.
+-Cp varía entre [0, 0.5] y define una "tolerancia" de ganancia que se admite si se procediera a hacer dicho split. 
 ```{r echo=FALSE}
 fit1 <- rpart(class ~ .,rd, control=rpart.control(minsplit=2,cp=0.01), method="class")
 fit2 <- rpart(class ~ .,rd, control=rpart.control(minsplit=140,cp=0.1), method="class")
@@ -91,6 +101,7 @@ c3 = confusionMatrix(predict(fit3,pruebaf,type="class"), prueba$class)
 c4 = confusionMatrix(predict(fit4,pruebaf,type="class"), prueba$class)
 ```
 
+Comparamos los 4 escenarios con su respectiva precisión
 
 Escenario |     Accuracy    |
 --------- |:---------------:|
@@ -99,4 +110,4 @@ Escenario |     Accuracy    |
 3         |`r c3$overall[1]`|
 4         |`r c4$overall[1]`|
 
-
+Se observa que la mayor precisión se obtiene con el arbol más complejo y la menor precisión se obtiene con el árbol menos complejo. Con esto inferimos la relación existente entre precisión y complejidad.
